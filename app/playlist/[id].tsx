@@ -1,11 +1,12 @@
 import { useState } from "react";
-import { FlatList, Image, Pressable, StyleSheet, Text, View } from "react-native";
+import { FlatList, Image, Modal, Pressable, StyleSheet, Text, View } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { usePlayer } from "../../lib/player";
 import { usePlaylists } from "../../lib/playlists";
+import { PLAYLIST_ICONS, PLAYLIST_ICON_KEYS } from "../../lib/playlistIcons";
 import { SongRow } from "../../components/SongRow";
 import { AddSongsModal } from "../../components/AddSongsModal";
 import { C, tint } from "../../lib/theme";
@@ -16,7 +17,10 @@ function totalMins(songs: { duration: number }[]): string {
   return m < 1 ? "few sec" : `${m} min`;
 }
 
-function Cover({ songs }: { songs: { image: string; imageSmall: string }[] }) {
+function Cover({ icon, songs }: { icon?: string | null; songs: { image: string; imageSmall: string }[] }) {
+  if (icon && PLAYLIST_ICONS[icon]) {
+    return <Image source={PLAYLIST_ICONS[icon]} style={s.cover} />;
+  }
   const arts = songs.slice(0, 4);
   if (arts.length === 0) {
     return (
@@ -42,8 +46,9 @@ export default function PlaylistDetail() {
   const router = useRouter();
   const { id } = useLocalSearchParams<{ id: string }>();
   const { play } = usePlayer();
-  const { playlists, deletePlaylist, removeFromPlaylist } = usePlaylists();
+  const { playlists, deletePlaylist, removeFromPlaylist, setPlaylistIcon } = usePlaylists();
   const [addOpen, setAddOpen] = useState(false);
+  const [iconOpen, setIconOpen] = useState(false);
   const pl = playlists.find((p) => p.id === id);
 
   if (!pl) {
@@ -70,7 +75,12 @@ export default function PlaylistDetail() {
         keyExtractor={(i) => i.id}
         ListHeaderComponent={
           <View style={s.header}>
-            <Cover songs={pl.songs} />
+            <Pressable onPress={() => setIconOpen(true)} style={s.coverWrap}>
+              <Cover icon={pl.icon} songs={pl.songs} />
+              <View style={s.editBadge}>
+                <Ionicons name="pencil" size={13} color={C.onAccent} />
+              </View>
+            </Pressable>
             <Text style={s.title}>{pl.name}</Text>
             <Text style={s.meta}>
               {pl.songs.length} songs • {totalMins(pl.songs)}
@@ -114,6 +124,35 @@ export default function PlaylistDetail() {
         ListEmptyComponent={<Text style={s.empty}>Empty — tap + above to add songs.</Text>}
       />
       <AddSongsModal visible={addOpen} playlistId={pl.id} playlistName={pl.name} onClose={() => setAddOpen(false)} />
+
+      <Modal visible={iconOpen} transparent animationType="fade" onRequestClose={() => setIconOpen(false)}>
+        <Pressable style={s.back2} onPress={() => setIconOpen(false)} />
+        <View style={[s.sheet, { paddingBottom: Math.max(insets.bottom, 24) }]}>
+          <Text style={s.sheetTitle}>Playlist cover</Text>
+          <View style={s.grid}>
+            {PLAYLIST_ICON_KEYS.map((k) => {
+              const selected = pl.icon === k;
+              return (
+                <Pressable
+                  key={k}
+                  onPress={() => {
+                    setPlaylistIcon(pl.id, k);
+                    setIconOpen(false);
+                  }}
+                  style={[s.pick, selected && s.pickSelected]}
+                >
+                  <Image source={PLAYLIST_ICONS[k]} style={s.pickImg} />
+                  {selected && (
+                    <View style={s.pickCheck}>
+                      <Ionicons name="checkmark-circle" size={24} color={C.accent} />
+                    </View>
+                  )}
+                </Pressable>
+              );
+            })}
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 }
@@ -124,12 +163,18 @@ const s = StyleSheet.create({
   fade: { paddingHorizontal: 8, paddingBottom: 4 },
   back: { paddingHorizontal: 8, paddingVertical: 6, alignSelf: "flex-start" },
   header: { alignItems: "center", paddingHorizontal: 24, paddingTop: 6, paddingBottom: 8 },
+  coverWrap: { position: "relative" },
   cover: {
     width: 200, height: 200, borderRadius: 14, backgroundColor: C.surface,
     flexDirection: "row", flexWrap: "wrap", overflow: "hidden",
   },
   coverEmpty: { alignItems: "center", justifyContent: "center" },
   cell: { width: "50%", height: "50%", backgroundColor: C.surface2 },
+  editBadge: {
+    position: "absolute", right: 10, bottom: 10,
+    width: 30, height: 30, borderRadius: 15,
+    backgroundColor: C.accent, alignItems: "center", justifyContent: "center",
+  },
   title: {
     color: C.text, fontSize: 30, fontWeight: "900", letterSpacing: -0.7,
     textAlign: "center", marginTop: 16,
@@ -146,4 +191,12 @@ const s = StyleSheet.create({
   backBtn: { backgroundColor: C.accent, paddingHorizontal: 24, paddingVertical: 10, borderRadius: 20 },
   backText: { color: C.onAccent, fontWeight: "800" },
   empty: { color: C.textFaint, textAlign: "center", marginTop: 24 },
+  back2: { flex: 1, backgroundColor: "rgba(0,0,0,0.6)" },
+  sheet: { backgroundColor: "#1a1a1a", borderTopLeftRadius: 20, borderTopRightRadius: 20, padding: 20 },
+  sheetTitle: { color: C.text, fontSize: 18, fontWeight: "800", textAlign: "center", marginBottom: 16 },
+  grid: { flexDirection: "row", flexWrap: "wrap", gap: 12, justifyContent: "center" },
+  pick: { borderRadius: 16, borderWidth: 2, borderColor: "transparent" },
+  pickSelected: { borderColor: C.accent },
+  pickImg: { width: 88, height: 88, borderRadius: 14, backgroundColor: C.surface2 },
+  pickCheck: { position: "absolute", top: -8, right: -8, backgroundColor: "#1a1a1a", borderRadius: 12 },
 });

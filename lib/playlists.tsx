@@ -9,6 +9,7 @@ export type Playlist = {
   name: string;
   createdAt: number;
   songs: Song[];
+  icon?: string | null;
 };
 
 type PlaylistContextType = {
@@ -16,6 +17,7 @@ type PlaylistContextType = {
   createPlaylist: (name: string) => Playlist;
   deletePlaylist: (id: string) => void;
   renamePlaylist: (id: string, name: string) => void;
+  setPlaylistIcon: (id: string, icon: string) => void;
   addToPlaylist: (playlistId: string, song: Song) => void;
   removeFromPlaylist: (playlistId: string, songId: string) => void;
   isInPlaylist: (playlistId: string, songId: string) => boolean;
@@ -72,7 +74,10 @@ export function PlaylistProvider({ children }: { children: React.ReactNode }) {
         const map = new Map(playlistsRef.current.map((p) => [p.id, p] as const));
         for (const cp of cloud) {
           const ex = map.get(cp.id);
-          map.set(cp.id, ex ? { ...ex, songs: mergeSongs(ex.songs, cp.songs) } : cp);
+          map.set(
+            cp.id,
+            ex ? { ...ex, icon: ex.icon ?? cp.icon, songs: mergeSongs(ex.songs, cp.songs) } : cp
+          );
         }
         const merged = [...map.values()].sort((a, b) => b.createdAt - a.createdAt);
         setPlaylists(merged);
@@ -117,6 +122,10 @@ export function PlaylistProvider({ children }: { children: React.ReactNode }) {
     setPlaylists((p) => p.map((x) => (x.id === id ? { ...x, name: n } : x)));
   }, []);
 
+  const setPlaylistIcon = useCallback((id: string, icon: string) => {
+    setPlaylists((p) => p.map((x) => (x.id === id ? { ...x, icon } : x)));
+  }, []);
+
   const addToPlaylist = useCallback((playlistId: string, song: Song) => {
     setPlaylists((p) =>
       p.map((x) =>
@@ -142,8 +151,8 @@ export function PlaylistProvider({ children }: { children: React.ReactNode }) {
   );
 
   const value = useMemo(
-    () => ({ playlists, createPlaylist, deletePlaylist, renamePlaylist, addToPlaylist, removeFromPlaylist, isInPlaylist }),
-    [playlists, createPlaylist, deletePlaylist, renamePlaylist, addToPlaylist, removeFromPlaylist, isInPlaylist]
+    () => ({ playlists, createPlaylist, deletePlaylist, renamePlaylist, setPlaylistIcon, addToPlaylist, removeFromPlaylist, isInPlaylist }),
+    [playlists, createPlaylist, deletePlaylist, renamePlaylist, setPlaylistIcon, addToPlaylist, removeFromPlaylist, isInPlaylist]
   );
 
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;

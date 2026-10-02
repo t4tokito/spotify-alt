@@ -1,11 +1,12 @@
 import { useState } from "react";
-import { FlatList, Pressable, StyleSheet, Text, TextInput, View } from "react-native";
+import { FlatList, Pressable, StyleSheet, Text, TextInput, View, Image } from "react-native";
 import { useRouter } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { usePlayer } from "../lib/player";
 import { usePlaylists } from "../lib/playlists";
 import { SongRow } from "../components/SongRow";
+import { PLAYLIST_ICONS } from "../lib/playlistIcons";
 import { SectionTitle } from "../components/SectionTitle";
 import { C } from "../lib/theme";
 
@@ -66,7 +67,11 @@ export default function Library() {
           style={({ pressed }) => [s.plRow, pressed && { opacity: 0.6 }]}
         >
           <View style={s.plArt}>
-            <Ionicons name="musical-notes" size={22} color={C.accent} />
+            {pl.icon && PLAYLIST_ICONS[pl.icon] ? (
+              <Image source={PLAYLIST_ICONS[pl.icon]} style={s.plArtImg} />
+            ) : (
+              <Ionicons name="musical-notes" size={22} color={C.accent} />
+            )}
           </View>
           <View style={s.mid}>
             <Text numberOfLines={1} style={s.plName}>{pl.name}</Text>
@@ -111,7 +116,8 @@ const s = StyleSheet.create({
   createBtn: { backgroundColor: "#BC8CF2", borderRadius: 10, paddingHorizontal: 16, justifyContent: "center" },
   createText: { color: "#141414", fontWeight: "800" },
   plRow: { flexDirection: "row", alignItems: "center", paddingVertical: 8, paddingHorizontal: 16, gap: 12 },
-  plArt: { width: 52, height: 52, borderRadius: 12, backgroundColor: "#1e1e1e", alignItems: "center", justifyContent: "center" },
+  plArt: { width: 52, height: 52, borderRadius: 12, backgroundColor: "#1e1e1e", alignItems: "center", justifyContent: "center", overflow: "hidden" },
+  plArtImg: { width: 52, height: 52, borderRadius: 12 },
   mid: { flex: 1 },
   plName: { color: "#fff", fontSize: 15, fontWeight: "700", letterSpacing: -0.2 },
   plSub: { color: "#888", fontSize: 13, marginTop: 2 },
