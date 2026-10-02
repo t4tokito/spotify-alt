@@ -1,12 +1,12 @@
 import { useState } from "react";
-import { FlatList, Pressable, StyleSheet, Text, TextInput, View, Image } from "react-native";
+import { FlatList, Pressable, StyleSheet, Text, View, Image } from "react-native";
 import { useRouter } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { usePlayer } from "../lib/player";
 import { usePlaylists } from "../lib/playlists";
 import { SongRow } from "../components/SongRow";
-import { IconPicker } from "../components/IconPicker";
+import { CreatePlaylistModal } from "../components/CreatePlaylistModal";
 import { PLAYLIST_ICONS } from "../lib/playlistIcons";
 import { SectionTitle } from "../components/SectionTitle";
 import { C } from "../lib/theme";
@@ -15,20 +15,9 @@ export default function Library() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
   const { liked, history } = usePlayer();
-  const { playlists, createPlaylist, setPlaylistIcon } = usePlaylists();
+  const { playlists } = usePlaylists();
   const likedList = Object.values(liked);
-  const [creating, setCreating] = useState(false);
-  const [name, setName] = useState("");
-  const [newIcon, setNewIcon] = useState<string | null>(null);
-
-  function create() {
-    if (!name.trim()) return;
-    const pl = createPlaylist(name);
-    if (newIcon) setPlaylistIcon(pl.id, newIcon);
-    setName("");
-    setNewIcon(null);
-    setCreating(false);
-  }
+  const [createOpen, setCreateOpen] = useState(false);
 
   return (
     <View style={[s.root, { paddingTop: insets.top }]}>
@@ -42,33 +31,14 @@ export default function Library() {
           <SectionTitle title={`Playlists (${playlists.length})`} icon="list" color={C.accent} size={18} tight />
         </View>
         <Pressable
-          onPress={() => setCreating((v) => !v)}
+          onPress={() => setCreateOpen(true)}
           hitSlop={8}
           style={({ pressed }) => [s.addBtn, pressed && { opacity: 0.55 }]}
         >
-          <Ionicons name={creating ? "close" : "add"} size={22} color={C.accent} />
+          <Ionicons name="add" size={22} color={C.accent} />
         </Pressable>
       </View>
-      {creating && (
-        <>
-          <View style={s.createRow}>
-            <TextInput
-              value={name}
-              onChangeText={setName}
-              placeholder="Playlist name"
-              placeholderTextColor="#777"
-              style={s.input}
-              autoFocus
-            />
-            <Pressable onPress={create} style={s.createBtn}>
-              <Text style={s.createText}>Create</Text>
-            </Pressable>
-          </View>
-          <View style={s.pickerWrap}>
-            <IconPicker selected={newIcon} onSelect={setNewIcon} />
-          </View>
-        </>
-      )}
+      <CreatePlaylistModal visible={createOpen} onClose={() => setCreateOpen(false)} />
       {playlists.map((pl) => (
         <Pressable
           key={pl.id}
@@ -89,7 +59,7 @@ export default function Library() {
           <Ionicons name="chevron-forward" size={20} color={C.neutral} />
         </Pressable>
       ))}
-      {playlists.length === 0 && !creating && (
+      {playlists.length === 0 && (
         <Text style={s.empty}>No playlists yet — tap + to make one, or add any song from its list icon.</Text>
       )}
 
@@ -120,11 +90,6 @@ const s = StyleSheet.create({
   plHeader: { flexDirection: "row", alignItems: "center", paddingHorizontal: 16, marginTop: 20, marginBottom: 10 },
   plTitleWrap: { flex: 1 },
   addBtn: { padding: 4 },
-  createRow: { flexDirection: "row", gap: 8, paddingHorizontal: 16, marginBottom: 4 },
-  pickerWrap: { paddingLeft: 16, marginBottom: 4 },
-  input: { flex: 1, backgroundColor: "#1e1e1e", borderRadius: 10, padding: 12, color: "#fff", fontSize: 15 },
-  createBtn: { backgroundColor: "#BC8CF2", borderRadius: 10, paddingHorizontal: 16, justifyContent: "center" },
-  createText: { color: "#141414", fontWeight: "800" },
   plRow: { flexDirection: "row", alignItems: "center", paddingVertical: 8, paddingHorizontal: 16, gap: 12 },
   plArt: { width: 52, height: 52, borderRadius: 12, backgroundColor: "#1e1e1e", alignItems: "center", justifyContent: "center", overflow: "hidden" },
   plArtImg: { width: 52, height: 52, borderRadius: 12 },
