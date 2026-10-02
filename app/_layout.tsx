@@ -6,6 +6,7 @@ import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import { AuthProvider, useAuth } from "../lib/auth";
 import { PlayerProvider } from "../lib/player";
+import { PlaylistProvider } from "../lib/playlists";
 import { BottomNav } from "../components/BottomNav";
 import { MiniPlayer } from "../components/MiniPlayer";
 
@@ -56,6 +57,7 @@ export default function RootLayout() {
       <SafeAreaProvider>
         <AuthProvider>
           <PlayerProvider>
+          <PlaylistProvider>
             <StatusBar style="light" />
             <Shell>
               <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: "#121212" } }}>
@@ -68,8 +70,10 @@ export default function RootLayout() {
                 <Stack.Screen name="signup" />
                 <Stack.Screen name="forgot-password" />
                 <Stack.Screen name="player" options={{ presentation: "modal" }} />
+                <Stack.Screen name="playlist/[id]" />
               </Stack>
             </Shell>
+          </PlaylistProvider>
           </PlayerProvider>
         </AuthProvider>
       </SafeAreaProvider>
