@@ -6,12 +6,14 @@ import { Ionicons } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { usePlayer } from "../lib/player";
 import { formatTime } from "../lib/music";
+import { AddToPlaylistModal } from "../components/AddToPlaylistModal";
 
 export default function PlayerScreen() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
   const { current, isPlaying, toggle, next, prev, position, duration, seek, toggleLike, isLiked, loading, volume, setVolume } = usePlayer();
   const [barW, setBarW] = useState(0);
+  const [plOpen, setPlOpen] = useState(false);
 
   if (!current) {
     return (
@@ -41,6 +43,9 @@ export default function PlayerScreen() {
         </View>
         <Pressable onPress={() => toggleLike(current)} hitSlop={10}>
           <Ionicons name={liked ? "heart" : "heart-outline"} size={28} color={liked ? "#BC8CF2" : "#fff"} />
+        </Pressable>
+        <Pressable onPress={() => setPlOpen(true)} hitSlop={10}>
+          <Ionicons name="list-outline" size={28} color="#fff" />
         </Pressable>
       </View>
 
@@ -95,6 +100,7 @@ export default function PlayerScreen() {
 
       <Text style={s.free}>Tokito Music • Free Forever • No Ads{kbps ? ` • ${kbps}kbps` : ""} • {current.language} • {current.year}</Text>
       <View style={{ height: insets.bottom + 10 }} />
+      <AddToPlaylistModal visible={plOpen} song={current} onClose={() => setPlOpen(false)} />
     </LinearGradient>
   );
 }
