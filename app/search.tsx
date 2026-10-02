@@ -47,6 +47,7 @@ export default function Search() {
       <FlatList
         data={results}
         keyExtractor={(i) => i.id}
+        keyboardShouldPersistTaps="handled"
         renderItem={({ item, index }) => <SongRow song={item} queue={results} index={index} />}
         ListEmptyComponent={!loading && q ? (
           <View style={s.emptyRow}>

@@ -76,6 +76,7 @@ export default function Library() {
       <FlatList
         data={likedList}
         keyExtractor={(i) => i.id}
+        keyboardShouldPersistTaps="handled"
         renderItem={({ item }) => <SongRow song={item} queue={likedList} />}
         ListEmptyComponent={<Text style={s.empty}>Nothing liked yet.</Text>}
         ListFooterComponent={
