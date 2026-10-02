@@ -1,0 +1,45 @@
+{
+  "expo": {
+    "name": "Tokito Music",
+    "slug": "tokito-music",
+    "version": "1.0.0",
+    "scheme": "tokitomusic",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "dark",
+    "plugins": [
+      "expo-router",
+      [
+        "expo-audio",
+        {
+          "microphonePermission": "Allow Tokito Music to access your microphone.",
+          "enableBackgroundPlayback": true
+        }
+      ],
+      "expo-splash-screen",
+      "expo-status-bar",
+      "expo-font",
+      "expo-asset"
+    ],
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.tokito.music"
+    },
+    "android": {
+      "package": "com.tokito.music",
+      "adaptiveIcon": {
+        "backgroundColor": "#121212",
+        "foregroundImage": "./assets/android-icon-foreground.png",
+        "backgroundImage": "./assets/android-icon-background.png",
+        "monochromeImage": "./assets/android-icon-monochrome.png"
+      },
+      "predictiveBackGestureEnabled": false
+    },
+    "web": {
+      "favicon": "./assets/favicon.png"
+    },
+    "extra": {
+      "router": {}
+    }
+  }
+}
