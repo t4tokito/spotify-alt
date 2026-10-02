@@ -111,8 +111,50 @@ export async function searchAlbums(query: string, limit = 10): Promise<any[]> {
   return json?.data?.results ?? [];
 }
 
+export type Playlist = { id: string; name: string; songCount: number };
+
+export async function searchPlaylists(query: string, limit = 5): Promise<Playlist[]> {
+  const json = await fetchMirror(`/api/search/playlists?query=${encodeURIComponent(query)}&limit=${limit}`);
+  const results = json?.data?.results ?? [];
+  return results
+    .filter((r: any) => r && r.id)
+    .map((r: any) => ({ id: String(r.id), name: r.name ?? "", songCount: r.songCount ?? 0 }));
+}
+
+export async function getPlaylistSongs(id: string, limit = 30): Promise<Song[]> {
+  const json = await fetchMirror(`/api/playlists?id=${encodeURIComponent(id)}&limit=${limit}`);
+  const songs = json?.data?.songs ?? [];
+  return songs.map(normalizeSong).filter((s: Song) => s.url);
+}
+
+/** Instagram/Reels viral playlists se trending gaane (merged + deduped). */
+export async function getInstagramTrending(limit = 20): Promise<Song[]> {
+  const queries = ["instagram trending songs", "reels viral", "instagram viral hits"];
+  const found: Playlist[] = [];
+  const searches = await Promise.all(queries.map((q) => searchPlaylists(q, 3).catch(() => [] as Playlist[])));
+  for (const pls of searches) {
+    for (const p of pls) {
+      if (!found.some((x) => x.id === p.id)) found.push(p);
+    }
+  }
+  const batches = await Promise.all(
+    found.slice(0, 3).map((p) => getPlaylistSongs(p.id, 15).catch(() => [] as Song[]))
+  );
+  const seen = new Set<string>();
+  const out: Song[] = [];
+  for (const songs of batches) {
+    for (const s of songs) {
+      if (!seen.has(s.id)) {
+        seen.add(s.id);
+        out.push(s);
+        if (out.length >= limit) return out;
+      }
+    }
+  }
+  return out;
+}
+
 export const HOME_SECTIONS: { title: string; query: string }[] = [
-  { title: "Trending Bollywood", query: "trending bollywood hits" },
   { title: "Arijit Singh Essentials", query: "arijit singh" },
   { title: "Punjabi Party", query: "punjabi hits diljit" },
   { title: "Lo-Fi & Chill", query: "lofi chill hindi" },

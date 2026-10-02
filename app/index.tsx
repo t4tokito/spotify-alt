@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { ActivityIndicator, FlatList, Image, Pressable, RefreshControl, ScrollView, StyleSheet, Text, View } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { HOME_SECTIONS, Song, searchSongs } from "../lib/music";
+import { HOME_SECTIONS, Song, getInstagramTrending, searchSongs } from "../lib/music";
 import { usePlayer } from "../lib/player";
 import { SongRow } from "../components/SongRow";
 
@@ -15,13 +15,19 @@ export default function Home() {
 
   async function load() {
     try {
-      const results = await Promise.all(
-        HOME_SECTIONS.slice(0, 4).map(async (sec) => ({
+      const [insta, ...rest] = await Promise.all([
+        getInstagramTrending(12),
+        ...HOME_SECTIONS.slice(0, 3).map(async (sec) => ({
           title: sec.title,
           songs: (await searchSongs(sec.query, 10)).slice(0, 10),
-        }))
-      );
-      setSections(results.filter((r) => r.songs.length > 0));
+        })),
+      ]);
+      const all = [
+        { title: "🔥 Instagram Trending", songs: insta.slice(0, 12) },
+        ...rest,
+      ];
+      setSections(all.filter((r) => r.songs.length > 0));
+    } catch {}
     } catch {}
     setLoading(false);
     setRefreshing(false);
