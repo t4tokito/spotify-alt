@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { ActivityIndicator, FlatList, StyleSheet, Text, TextInput, View } from "react-native";
+import { Ionicons } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Song, searchSongs } from "../lib/music";
 import { SongRow } from "../components/SongRow";
@@ -47,7 +48,12 @@ export default function Search() {
         data={results}
         keyExtractor={(i) => i.id}
         renderItem={({ item, index }) => <SongRow song={item} queue={results} index={index} />}
-        ListEmptyComponent={!loading && q ? <Text style={s.empty}>No results. Try another song 🎵</Text> : null}
+        ListEmptyComponent={!loading && q ? (
+          <View style={s.emptyRow}>
+            <Ionicons name="musical-note-outline" size={18} color="#777" />
+            <Text style={s.emptyText}>No results. Try another song</Text>
+          </View>
+        ) : null}
       />
     </View>
   );
@@ -59,5 +65,6 @@ const s = StyleSheet.create({
   input: { backgroundColor: "#fff", marginHorizontal: 16, borderRadius: 8, padding: 12, fontSize: 16, color: "#000" },
   chips: { flexDirection: "row", flexWrap: "wrap", gap: 8, padding: 16 },
   chip: { backgroundColor: "#222", color: "#fff", paddingHorizontal: 14, paddingVertical: 8, borderRadius: 20, overflow: "hidden" },
-  empty: { color: "#777", textAlign: "center", marginTop: 30 },
+  emptyRow: { flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 8, marginTop: 30 },
+  emptyText: { color: "#777" },
 });

@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { ActivityIndicator, FlatList, Image, Pressable, RefreshControl, ScrollView, StyleSheet, Text, View } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
+import { Ionicons } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { HOME_SECTIONS, Song, getInstagramTrending, searchSongs } from "../lib/music";
 import { usePlayer } from "../lib/player";
@@ -9,7 +10,7 @@ import { SongRow } from "../components/SongRow";
 export default function Home() {
   const insets = useSafeAreaInsets();
   const { play, history } = usePlayer();
-  const [sections, setSections] = useState<{ title: string; songs: Song[] }[]>([]);
+  const [sections, setSections] = useState<{ title: string; songs: Song[]; icon?: string }[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
 
@@ -23,7 +24,7 @@ export default function Home() {
         })),
       ]);
       const all = [
-        { title: "🔥 Instagram Trending", songs: insta.slice(0, 12) },
+        { title: "Instagram Trending", icon: "flame", songs: insta.slice(0, 12) },
         ...rest,
       ];
       setSections(all.filter((r) => r.songs.length > 0));
@@ -49,7 +50,10 @@ export default function Home() {
       refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => { setRefreshing(true); load(); }} tintColor="#1DB954" />}
     >
       <LinearGradient colors={["#1DB95433", "#121212"]} style={s.hero}>
-        <Text style={s.greet}>Good evening 🎧</Text>
+        <View style={s.greetRow}>
+          <Text style={s.greet}>Good evening</Text>
+          <Ionicons name="headset-outline" size={16} color="#ccc" />
+        </View>
         <Text style={s.brand}>Tokito Music</Text>
         <Text style={s.tag}>100% Free • No Ads • 320kbps</Text>
       </LinearGradient>
@@ -76,7 +80,14 @@ export default function Home() {
 
       {sections.map((sec) => (
         <View key={sec.title}>
-          <Text style={s.secTitle}>{sec.title}</Text>
+          {sec.icon ? (
+            <View style={s.secHeader}>
+              <Ionicons name={sec.icon as any} size={20} color="#1DB954" />
+              <Text style={s.secTitlePlain}>{sec.title}</Text>
+            </View>
+          ) : (
+            <Text style={s.secTitle}>{sec.title}</Text>
+          )}
           <FlatList
             horizontal
             data={sec.songs}
@@ -108,9 +119,12 @@ const s = StyleSheet.create({
   loadText: { color: "#888" },
   hero: { padding: 20, paddingTop: 26 },
   greet: { color: "#ccc", fontSize: 14 },
+  greetRow: { flexDirection: "row", alignItems: "center", gap: 6 },
   brand: { color: "#fff", fontSize: 34, fontWeight: "900", marginTop: 4 },
   tag: { color: "#1DB954", fontWeight: "700", marginTop: 6 },
   secTitle: { color: "#fff", fontSize: 20, fontWeight: "800", paddingHorizontal: 16, marginTop: 22, marginBottom: 12 },
+  secHeader: { flexDirection: "row", alignItems: "center", gap: 8, paddingHorizontal: 16, marginTop: 22, marginBottom: 12 },
+  secTitlePlain: { color: "#fff", fontSize: 20, fontWeight: "800" },
   card: { width: 140 },
   cardArt: { width: 140, height: 140, borderRadius: 8, backgroundColor: "#222" },
   cardTitle: { color: "#fff", fontWeight: "700", marginTop: 6, fontSize: 13 },
