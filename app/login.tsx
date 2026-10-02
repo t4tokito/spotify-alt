@@ -17,8 +17,8 @@ export default function Login() {
 
   async function onLogin() {
     setError("");
-    if (!identifier.trim()) return setError("Email ya username likho.");
-    if (!password) return setError("Password likho.");
+    if (!identifier.trim()) return setError("Enter your email or username.");
+    if (!password) return setError("Enter your password.");
     setBusy(true);
     try {
       await signIn(identifier, password);
@@ -35,16 +35,16 @@ export default function Login() {
       <Text style={s.brand}>Tokito Music</Text>
       <Text style={s.sub}>100% Free • No Ads</Text>
       {!FIREBASE_CONFIGURED && (
-        <Text style={s.warn}>Firebase keys missing hai — .env me EXPO_PUBLIC_FIREBASE_* daalo aur app restart karo.</Text>
+        <Text style={s.warn}>Firebase keys are missing — add EXPO_PUBLIC_FIREBASE_* to .env and restart the app.</Text>
       )}
-      <AuthInput value={identifier} onChangeText={setIdentifier} placeholder="Email ya username" keyboardType="email-address" />
+      <AuthInput value={identifier} onChangeText={setIdentifier} placeholder="Email or username" keyboardType="email-address" />
       <AuthInput value={password} onChangeText={setPassword} placeholder="Password" secure />
       <AuthError msg={error} />
       <AuthButton title="Log In" onPress={onLogin} busy={busy} />
-      <AuthLink label="Password bhool gaye?" onPress={() => router.push("/forgot-password")} />
+      <AuthLink label="Forgot password?" onPress={() => router.push("/forgot-password")} />
       <View style={s.row}>
-        <Text style={s.muted}>Account nahi hai? </Text>
-        <AuthLink label="Sign up karo" onPress={() => router.push("/signup")} />
+        <Text style={s.muted}>No account yet? </Text>
+        <AuthLink label="Sign up" onPress={() => router.push("/signup")} />
       </View>
     </AuthShell>
   );

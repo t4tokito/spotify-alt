@@ -16,7 +16,7 @@ export default function ForgotPassword() {
 
   async function onSend() {
     setError("");
-    if (!email.trim()) return setError("Email likho.");
+    if (!email.trim()) return setError("Enter your email.");
     setBusy(true);
     try {
       await resetPassword(email);
@@ -31,17 +31,17 @@ export default function ForgotPassword() {
     <AuthShell>
       <View style={{ height: insets.top }} />
       <Text style={s.brand}>Password reset</Text>
-      <Text style={s.sub}>Email daalo, reset link bhejenge.</Text>
+      <Text style={s.sub}>Enter your email, we'll send a reset link.</Text>
       {done ? (
-        <Text style={s.ok}>Link bhej diya. Email ka inbox (aur spam) check karo, phir wapas login karo.</Text>
+        <Text style={s.ok}>Link sent. Check your inbox (and spam folder), then log in.</Text>
       ) : (
         <>
           <AuthInput value={email} onChangeText={setEmail} placeholder="Email" keyboardType="email-address" />
           <AuthError msg={error} />
-          <AuthButton title="Reset Link Bhejo" onPress={onSend} busy={busy} />
+          <AuthButton title="Send Reset Link" onPress={onSend} busy={busy} />
         </>
       )}
-      <AuthLink label="Wapas login pe jao" onPress={() => router.replace("/login")} />
+      <AuthLink label="Back to login" onPress={() => router.replace("/login")} />
     </AuthShell>
   );
 }

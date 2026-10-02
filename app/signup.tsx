@@ -26,7 +26,7 @@ export default function Signup() {
     setNameStatus("Checking...");
     const t = setTimeout(async () => {
       try {
-        setNameStatus((await isUsernameAvailable(u)) ? "Ye username available hai." : "Ye username already taken hai.");
+        setNameStatus((await isUsernameAvailable(u)) ? "This username is available." : "This username is already taken.");
       } catch {
         setNameStatus("");
       }
@@ -55,17 +55,17 @@ export default function Signup() {
   return (
     <AuthShell>
       <View style={{ height: insets.top }} />
-      <Text style={s.brand}>Account banao</Text>
+      <Text style={s.brand}>Create account</Text>
       <Text style={s.sub}>Username • Email • Password</Text>
-      <AuthInput value={username} onChangeText={setUsername} placeholder="Username (5-15 letters)" />
+      <AuthInput value={username} onChangeText={setUsername} placeholder="Username (5-15 characters)" />
       <AuthHint msg={nameStatus} ok={nameStatus.includes("available")} />
       <AuthInput value={email} onChangeText={setEmail} placeholder="Email" keyboardType="email-address" />
-      <AuthInput value={password} onChangeText={setPassword} placeholder="Password (min 8 letters)" secure />
+      <AuthInput value={password} onChangeText={setPassword} placeholder="Password (min 8 characters)" secure />
       <AuthError msg={error} />
       <AuthButton title="Sign Up" onPress={onSignup} busy={busy} />
       <View style={s.row}>
-        <Text style={s.muted}>Already account hai? </Text>
-        <AuthLink label="Log in karo" onPress={() => router.replace("/login")} />
+        <Text style={s.muted}>Already have an account? </Text>
+        <AuthLink label="Log in" onPress={() => router.replace("/login")} />
       </View>
     </AuthShell>
   );

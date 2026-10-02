@@ -40,7 +40,7 @@ const AuthContext = createContext<AuthContextValue | null>(null);
 
 function ensureConfigured() {
   if (!FIREBASE_CONFIGURED) {
-    throw new Error("Firebase setup missing hai. .env me keys daalo.");
+    throw new Error("Firebase is not configured. Add the keys to .env.");
   }
 }
 
@@ -48,23 +48,23 @@ export function authErrorMessage(e: any): string {
   const code = e?.code as string | undefined;
   switch (code) {
     case "auth/invalid-email":
-      return "Ye email sahi nahi lag raha.";
+      return "That email doesn't look right.";
     case "auth/missing-password":
-      return "Password likho.";
+      return "Please enter your password.";
     case "auth/weak-password":
-      return "Password kam se kam 8 characters ka ho.";
+      return "Password must be at least 8 characters.";
     case "auth/email-already-in-use":
-      return "Is email se account already bana hai. Login karo.";
+      return "An account with this email already exists. Log in instead.";
     case "auth/invalid-credential":
     case "auth/wrong-password":
     case "auth/user-not-found":
-      return "Username/email ya password galat hai.";
+      return "Incorrect username/email or password.";
     case "auth/too-many-requests":
-      return "Bahut saari koshish. Thodi der baad try karo.";
+      return "Too many attempts. Try again in a moment.";
     case "auth/network-request-failed":
-      return "Network error. Connection check karo.";
+      return "Network error. Check your connection.";
     default:
-      return e?.message || "Kuch galat ho gaya.";
+      return e?.message || "Something went wrong.";
   }
 }
 
@@ -120,7 +120,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         const passErr = validatePassword(password);
         if (passErr) throw new Error(passErr);
         const available = await isUsernameAvailable(u);
-        if (!available) throw new Error("Ye username already taken hai.");
+        if (!available) throw new Error("This username is already taken.");
 
         const cred = await createUserWithEmailAndPassword(auth, e, password);
         try {

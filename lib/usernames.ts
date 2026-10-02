@@ -24,23 +24,23 @@ const USERNAME_RE = /^[a-zA-Z0-9_]+$/;
 export function validateUsername(raw: string): string | null {
   const u = (raw || "").trim();
   if (u.length < MIN_USERNAME)
-    return `Username kam se kam ${MIN_USERNAME} characters ka ho.`;
+    return `Username must be at least ${MIN_USERNAME} characters.`;
   if (u.length > MAX_USERNAME)
-    return `Username zyada se zyada ${MAX_USERNAME} characters ka ho.`;
+    return `Username must be at most ${MAX_USERNAME} characters.`;
   if (!USERNAME_RE.test(u))
-    return "Sirf letters, numbers aur underscore use karo.";
+    return "Use only letters, numbers and underscores.";
   return null;
 }
 
 export function validateEmail(raw: string): string | null {
   const e = (raw || "").trim();
-  if (!e) return "Email likho.";
-  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e)) return "Ye email sahi nahi lag raha.";
+  if (!e) return "Enter your email.";
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e)) return "That email doesn't look right.";
   return null;
 }
 
 export function validatePassword(raw: string): string | null {
-  if (!raw || raw.length < 8) return "Password kam se kam 8 characters ka ho.";
+  if (!raw || raw.length < 8) return "Password must be at least 8 characters.";
   return null;
 }
 
@@ -87,7 +87,7 @@ export async function claimUsername(
 
   await runTransaction(db, async (tx) => {
     const existing = await tx.get(unameRef);
-    if (existing.exists()) throw new Error("Ye username already taken hai.");
+    if (existing.exists()) throw new Error("This username is already taken.");
     tx.set(unameRef, { uid, email, username });
     tx.set(
       userRef,

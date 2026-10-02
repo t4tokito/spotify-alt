@@ -21,7 +21,7 @@ export default function Library() {
         data={likedList}
         keyExtractor={(i) => i.id}
         renderItem={({ item }) => <SongRow song={item} queue={likedList} />}
-        ListEmptyComponent={<Text style={s.empty}>Abhi kuch like nahi kiya.</Text>}
+        ListEmptyComponent={<Text style={s.empty}>Nothing liked yet.</Text>}
         ListFooterComponent={
           <View>
             <View style={s.secHeader}>
