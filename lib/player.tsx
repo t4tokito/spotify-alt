@@ -47,6 +47,10 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
   statusRef.current = status;
   const cloudReady = useRef(false);
   const wasLoggedIn = useRef(false);
+  const likedRef = useRef(liked);
+  likedRef.current = liked;
+  const historyRef = useRef(history);
+  historyRef.current = history;
 
   useEffect(() => {
     (async () => {
@@ -79,11 +83,20 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
       try {
         const [cLiked, cHist] = await Promise.all([loadCloudLiked(uid), loadCloudHistory(uid)]);
         if (cancelled) return;
-        setLiked((prev) => ({ ...cLiked, ...prev }));
-        setHistory((prev) => {
-          const seen = new Set(prev.map((s) => s.id));
-          return [...prev, ...cHist.filter((s) => !seen.has(s.id))].slice(0, 50);
-        });
+        // pull: merge cloud into local
+        const localLiked = { ...likedRef.current };
+        const localHist = [...historyRef.current];
+        const mergedLiked = { ...cLiked, ...localLiked };
+        const seen = new Set(localHist.map((s) => s.id));
+        const mergedHist = [...localHist, ...cHist.filter((s) => !seen.has(s.id))].slice(0, 50);
+        setLiked(mergedLiked);
+        setHistory(mergedHist);
+        // push: upload local-only data so other devices see it
+        const freshLikes = Object.values(localLiked).filter((s) => !cLiked[s.id]);
+        await Promise.all([
+          ...freshLikes.map((s) => likeCloud(uid, s)),
+          saveCloudHistory(uid, mergedHist),
+        ]).catch(() => {});
       } catch (e) {
         console.warn("cloud sync (liked/history) failed:", e);
       }

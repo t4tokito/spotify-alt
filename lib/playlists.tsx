@@ -39,6 +39,8 @@ export function PlaylistProvider({ children }: { children: React.ReactNode }) {
   const [playlists, setPlaylists] = useState<Playlist[]>([]);
   const cloudReady = useRef(false);
   const wasLoggedIn = useRef(false);
+  const playlistsRef = useRef(playlists);
+  playlistsRef.current = playlists;
 
   useEffect(() => {
     (async () => {
@@ -66,16 +68,16 @@ export function PlaylistProvider({ children }: { children: React.ReactNode }) {
       try {
         const cloud = await loadCloudPlaylists(uid);
         if (cancelled) return;
-        if (cloud.length > 0) {
-          setPlaylists((prev) => {
-          const map = new Map(prev.map((p) => [p.id, p] as const));
-          for (const cp of cloud) {
-            const ex = map.get(cp.id);
-            map.set(cp.id, ex ? { ...ex, songs: mergeSongs(ex.songs, cp.songs) } : cp);
-          }
-          return [...map.values()].sort((a, b) => b.createdAt - a.createdAt);
-          });
+        // pull: merge cloud into local
+        const map = new Map(playlistsRef.current.map((p) => [p.id, p] as const));
+        for (const cp of cloud) {
+          const ex = map.get(cp.id);
+          map.set(cp.id, ex ? { ...ex, songs: mergeSongs(ex.songs, cp.songs) } : cp);
         }
+        const merged = [...map.values()].sort((a, b) => b.createdAt - a.createdAt);
+        setPlaylists(merged);
+        // push: upload everything so other devices converge
+        await Promise.all(merged.map((p) => saveCloudPlaylist(uid, p))).catch(() => {});
       } catch (e) {
         console.warn("cloud sync (playlists) failed:", e);
       }
