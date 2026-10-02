@@ -62,6 +62,7 @@ export async function isUsernameAvailable(username: string): Promise<boolean> {
 export type Profile = {
   username?: string;
   email?: string;
+  photoURL?: string | null;
 };
 
 export async function getProfile(uid: string): Promise<Profile | null> {
@@ -95,4 +96,37 @@ export async function claimUsername(
       { merge: true }
     );
   });
+}
+
+/**
+ * Change username: claims the new one, frees the old one, updates the
+ * profile — atomically. Throws if the new name is taken.
+ */
+export async function changeUsername(
+  uid: string,
+  oldRaw: string,
+  newRaw: string
+): Promise<void> {
+  const next = newRaw.trim();
+  const err = validateUsername(next);
+  if (err) throw new Error(err);
+  const oldKey = key(oldRaw);
+  const newKey = key(next);
+  if (oldKey === newKey) return;
+
+  const userSnap = await getDoc(doc(db, "users", uid));
+  const email = (userSnap.data()?.email as string) ?? "";
+
+  await runTransaction(db, async (tx) => {
+    const taken = await tx.get(doc(db, "usernames", newKey));
+    if (taken.exists()) throw new Error("This username is already taken.");
+    tx.set(doc(db, "usernames", newKey), { uid, email, username: next });
+    tx.delete(doc(db, "usernames", oldKey));
+    tx.update(doc(db, "users", uid), { username: next });
+  });
+}
+
+/** Set profile picture (key of a bundled avatar). */
+export async function updatePhoto(uid: string, photo: string): Promise<void> {
+  await updateDoc(doc(db, "users", uid), { photoURL: photo });
 }

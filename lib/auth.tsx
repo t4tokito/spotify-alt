@@ -16,10 +16,12 @@ import {
 } from "firebase/auth";
 import { FIREBASE_CONFIGURED, auth } from "./firebase";
 import {
+  changeUsername,
   claimUsername,
   getProfile,
   isUsernameAvailable,
   resolveUsernameToEmail,
+  updatePhoto as updatePhotoDoc,
   validateEmail,
   validatePassword,
   validateUsername,
@@ -33,6 +35,8 @@ type AuthContextValue = {
   signIn: (identifier: string, password: string) => Promise<void>;
   signUp: (email: string, username: string, password: string) => Promise<void>;
   resetPassword: (email: string) => Promise<void>;
+  updateUsername: (username: string) => Promise<void>;
+  updatePhoto: (photo: string) => Promise<void>;
   signOut: () => Promise<void>;
 };
 
@@ -137,6 +141,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         const emailErr = validateEmail(e);
         if (emailErr) throw new Error(emailErr);
         await sendPasswordResetEmail(auth, e);
+      },
+      updateUsername: async (username) => {
+        ensureConfigured();
+        const u = auth.currentUser;
+        if (!u) throw new Error("You must be signed in.");
+        await changeUsername(u.uid, profile?.username ?? "", username);
+        setProfile((prev) => ({ ...prev, username: username.trim() }));
+      },
+      updatePhoto: async (photo) => {
+        ensureConfigured();
+        const u = auth.currentUser;
+        if (!u) throw new Error("You must be signed in.");
+        await updatePhotoDoc(u.uid, photo);
+        setProfile((prev) => ({ ...prev, photoURL: photo }));
       },
       signOut: () => {
         ensureConfigured();
