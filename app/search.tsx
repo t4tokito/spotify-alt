@@ -43,7 +43,7 @@ export default function Search() {
           ))}
         </View>
       )}
-      {loading && <ActivityIndicator color="#1DB954" style={{ marginTop: 20 }} />}
+      {loading && <ActivityIndicator color="#790D16" style={{ marginTop: 20 }} />}
       <FlatList
         data={results}
         keyExtractor={(i) => i.id}

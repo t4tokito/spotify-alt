@@ -20,7 +20,7 @@ export function BottomNav() {
         const active = pathname === t.href;
         return (
           <Pressable key={t.href} onPress={() => router.replace(t.href as any)} style={s.tab}>
-            <Ionicons name={(active ? t.icon : `${t.icon}-outline`) as any} size={24} color={active ? "#1DB954" : "#888"} />
+            <Ionicons name={(active ? t.icon : `${t.icon}-outline`) as any} size={24} color={active ? "#790D16" : "#888"} />
             <Text style={[s.label, active && s.active]}>{t.label}</Text>
           </Pressable>
         );
@@ -33,5 +33,5 @@ const s = StyleSheet.create({
   bar: { flexDirection: "row", backgroundColor: "#121212", borderTopWidth: 1, borderTopColor: "#222", paddingTop: 8 },
   tab: { flex: 1, alignItems: "center", gap: 2 },
   label: { color: "#888", fontSize: 11, fontWeight: "600" },
-  active: { color: "#1DB954" },
+  active: { color: "#790D16" },
 });
