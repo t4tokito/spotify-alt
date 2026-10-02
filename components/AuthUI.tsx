@@ -94,7 +94,7 @@ export function AuthButton({
 export function AuthSecondaryButton({ title, onPress }: { title: string; onPress: () => void }) {
   return (
     <Pressable onPress={onPress} style={s.btnDark}>
-      <Text style={s.btnText}>{title}</Text>
+      <Text style={s.btnDarkText}>{title}</Text>
     </Pressable>
   );
 }
@@ -142,6 +142,7 @@ const s = StyleSheet.create({
   btnDark: { backgroundColor: "rgba(20,20,20,0.85)", borderRadius: 28, paddingVertical: 16, alignItems: "center" },
   btnBusy: { opacity: 0.7 },
   btnText: { color: ON_ACCENT, fontWeight: "800", fontSize: 15, letterSpacing: 1 },
+  btnDarkText: { color: "#fff", fontWeight: "800", fontSize: 15, letterSpacing: 1 },
   error: { color: "#ff9d9d", fontSize: 13, lineHeight: 18 },
   hint: { color: "rgba(255,255,255,0.7)", fontSize: 13 },
   hintOk: { color: "#7ddba3" },
