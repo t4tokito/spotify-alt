@@ -1,7 +1,8 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { getApp, getApps, initializeApp } from "firebase/app";
-// @ts-ignore - getReactNativePersistence exists at runtime in @firebase/auth/dist/rn but has no TS types
-import { initializeAuth, getReactNativePersistence } from "@firebase/auth/dist/rn/index.js";
+import { getAuth, initializeAuth } from "firebase/auth";
+// @ts-ignore - getReactNativePersistence ships in the React Native build (resolver picks it via the react-native export condition)
+import { getReactNativePersistence } from "firebase/auth";
 import { initializeFirestore, CACHE_SIZE_UNLIMITED } from "firebase/firestore";
 
 const firebaseConfig = {
@@ -23,7 +24,6 @@ try {
     persistence: getReactNativePersistence(AsyncStorage),
   });
 } catch {
-  const { getAuth } = require("firebase/auth");
   auth = getAuth(app);
 }
 
