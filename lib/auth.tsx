@@ -138,7 +138,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         if (emailErr) throw new Error(emailErr);
         await sendPasswordResetEmail(auth, e);
       },
-      signOut: () => fbSignOut(auth),
+      signOut: () => {
+        ensureConfigured();
+        return fbSignOut(auth);
+      },
     }),
     [user, profile, initializing]
   );

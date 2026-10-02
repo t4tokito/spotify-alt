@@ -18,20 +18,24 @@ export const FIREBASE_CONFIGURED = !!firebaseConfig.apiKey;
 
 const app = getApps().length ? getApp() : initializeApp(firebaseConfig);
 
-let auth: any;
-try {
-  auth = initializeAuth(app, {
-    persistence: getReactNativePersistence(AsyncStorage),
+// No keys yet (.env missing) -> don't touch Firebase at all.
+// Auth screens show a setup warning instead of crashing the app.
+let auth: any = null;
+let db: any = null;
+if (FIREBASE_CONFIGURED) {
+  try {
+    auth = initializeAuth(app, {
+      persistence: getReactNativePersistence(AsyncStorage),
+    });
+  } catch {
+    auth = getAuth(app);
+  }
+  db = initializeFirestore(app, {
+    experimentalForceLongPolling: true,
+    cacheSizeBytes: CACHE_SIZE_UNLIMITED,
   });
-} catch {
-  auth = getAuth(app);
 }
 
-export { auth };
-
-export const db = initializeFirestore(app, {
-  experimentalForceLongPolling: true,
-  cacheSizeBytes: CACHE_SIZE_UNLIMITED,
-});
+export { auth, db };
 
 export default app;
