@@ -4,6 +4,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import type { Song } from "../lib/music";
 import { usePlaylists } from "../lib/playlists";
+import { IconPicker } from "./IconPicker";
 
 export function AddToPlaylistModal({
   visible,
@@ -15,15 +16,18 @@ export function AddToPlaylistModal({
   onClose: () => void;
 }) {
   const insets = useSafeAreaInsets();
-  const { playlists, createPlaylist, addToPlaylist, isInPlaylist } = usePlaylists();
+  const { playlists, createPlaylist, setPlaylistIcon, addToPlaylist, isInPlaylist } = usePlaylists();
   const [name, setName] = useState("");
+  const [newIcon, setNewIcon] = useState<string | null>(null);
   const [addedId, setAddedId] = useState<string | null>(null);
 
   function create() {
     if (!name.trim()) return;
     const pl = createPlaylist(name);
+    if (newIcon) setPlaylistIcon(pl.id, newIcon);
     addToPlaylist(pl.id, song);
     setName("");
+    setNewIcon(null);
     setAddedId(pl.id);
     setTimeout(onClose, 500);
   }
@@ -53,6 +57,7 @@ export function AddToPlaylistModal({
             <Ionicons name="add" size={22} color="#141414" />
           </Pressable>
         </View>
+        <IconPicker selected={newIcon} onSelect={setNewIcon} />
         <FlatList
           data={playlists}
           keyExtractor={(p) => p.id}

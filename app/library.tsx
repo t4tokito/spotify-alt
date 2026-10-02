@@ -6,6 +6,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { usePlayer } from "../lib/player";
 import { usePlaylists } from "../lib/playlists";
 import { SongRow } from "../components/SongRow";
+import { IconPicker } from "../components/IconPicker";
 import { PLAYLIST_ICONS } from "../lib/playlistIcons";
 import { SectionTitle } from "../components/SectionTitle";
 import { C } from "../lib/theme";
@@ -14,15 +15,18 @@ export default function Library() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
   const { liked, history } = usePlayer();
-  const { playlists, createPlaylist } = usePlaylists();
+  const { playlists, createPlaylist, setPlaylistIcon } = usePlaylists();
   const likedList = Object.values(liked);
   const [creating, setCreating] = useState(false);
   const [name, setName] = useState("");
+  const [newIcon, setNewIcon] = useState<string | null>(null);
 
   function create() {
     if (!name.trim()) return;
-    createPlaylist(name);
+    const pl = createPlaylist(name);
+    if (newIcon) setPlaylistIcon(pl.id, newIcon);
     setName("");
+    setNewIcon(null);
     setCreating(false);
   }
 
@@ -46,19 +50,24 @@ export default function Library() {
         </Pressable>
       </View>
       {creating && (
-        <View style={s.createRow}>
-          <TextInput
-            value={name}
-            onChangeText={setName}
-            placeholder="Playlist name"
-            placeholderTextColor="#777"
-            style={s.input}
-            autoFocus
-          />
-          <Pressable onPress={create} style={s.createBtn}>
-            <Text style={s.createText}>Create</Text>
-          </Pressable>
-        </View>
+        <>
+          <View style={s.createRow}>
+            <TextInput
+              value={name}
+              onChangeText={setName}
+              placeholder="Playlist name"
+              placeholderTextColor="#777"
+              style={s.input}
+              autoFocus
+            />
+            <Pressable onPress={create} style={s.createBtn}>
+              <Text style={s.createText}>Create</Text>
+            </Pressable>
+          </View>
+          <View style={s.pickerWrap}>
+            <IconPicker selected={newIcon} onSelect={setNewIcon} />
+          </View>
+        </>
       )}
       {playlists.map((pl) => (
         <Pressable
@@ -112,6 +121,7 @@ const s = StyleSheet.create({
   plTitleWrap: { flex: 1 },
   addBtn: { padding: 4 },
   createRow: { flexDirection: "row", gap: 8, paddingHorizontal: 16, marginBottom: 4 },
+  pickerWrap: { paddingLeft: 16, marginBottom: 4 },
   input: { flex: 1, backgroundColor: "#1e1e1e", borderRadius: 10, padding: 12, color: "#fff", fontSize: 15 },
   createBtn: { backgroundColor: "#BC8CF2", borderRadius: 10, paddingHorizontal: 16, justifyContent: "center" },
   createText: { color: "#141414", fontWeight: "800" },
