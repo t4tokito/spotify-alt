@@ -23,16 +23,14 @@ export function AuthBg({ children }: { children: React.ReactNode }) {
   );
 }
 
-/** Brand mark: maroon disc with music note + name. */
+/** Brand mark: maroon disc with music note + big two-line name. */
 export function AuthBrand({ tagline = "Never Lost. Discover New Music." }: { tagline?: string }) {
   return (
     <View>
-      <View style={s.brandRow}>
-        <View style={s.disc}>
-          <Ionicons name="musical-note" size={26} color="#fff" />
-        </View>
-        <Text style={s.brandName}>Tokito Music</Text>
+      <View style={s.disc}>
+        <Ionicons name="musical-note" size={30} color="#fff" />
       </View>
+      <Text style={s.brandName}>Tokito{"\n"}Music</Text>
       <Text style={s.tagline}>{tagline}</Text>
     </View>
   );
@@ -125,10 +123,10 @@ const s = StyleSheet.create({
   content: { flex: 1, paddingHorizontal: 24, gap: 12, justifyContent: "flex-end" },
   brandRow: { flexDirection: "row", alignItems: "center", gap: 10 },
   disc: {
-    width: 44, height: 44, borderRadius: 22,
+    width: 52, height: 52, borderRadius: 26,
     backgroundColor: MAROON, alignItems: "center", justifyContent: "center",
   },
-  brandName: { color: "#fff", fontSize: 26, fontWeight: "900" },
+  brandName: { color: "#fff", fontSize: 52, fontWeight: "900", lineHeight: 56, marginTop: 14 },
   tagline: { color: "rgba(255,255,255,0.75)", fontSize: 13, marginTop: 8 },
   heading: { color: "#fff", fontSize: 30, fontWeight: "900", letterSpacing: 1 },
   headingSub: { color: "rgba(255,255,255,0.7)", fontSize: 13, marginTop: 4 },
