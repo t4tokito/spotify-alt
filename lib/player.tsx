@@ -1,8 +1,7 @@
 import React, { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
 import { useAudioPlayer, useAudioPlayerStatus } from "expo-audio";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import type { Song } from "./saavn";
-import { resolveYouTubeStream } from "./youtube";
+import type { Song } from "./music";
 
 type PlayerContextType = {
   current: Song | null;
@@ -15,7 +14,7 @@ type PlayerContextType = {
   history: Song[];
   toggleLike: (s: Song) => void;
   isLiked: (id: string) => boolean;
-  play: (song: Song, queue?: Song[]) => Promise<void>;
+  play: (song: Song, queue?: Song[]) => void;
   toggle: () => void;
   next: () => void;
   prev: () => void;
@@ -27,12 +26,6 @@ const Ctx = createContext<PlayerContextType | null>(null);
 const LIKED_KEY = "@tokito-music:liked";
 const HISTORY_KEY = "@tokito-music:history";
 
-/** YouTube stream URLs expire — never trust a stored one, always re-resolve. */
-function stripStaleUrl(s: Song): Song {
-  if (s.source === "youtube") return { ...s, url: "" };
-  return s;
-}
-
 export function PlayerProvider({ children }: { children: React.ReactNode }) {
   const player = useAudioPlayer(null);
   const status = useAudioPlayerStatus(player);
@@ -40,10 +33,8 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
   const [queue, setQueue] = useState<Song[]>([]);
   const [liked, setLiked] = useState<Record<string, Song>>({});
   const [history, setHistory] = useState<Song[]>([]);
-  const [resolving, setResolving] = useState(false);
   const queueRef = useRef<Song[]>([]);
   const currentRef = useRef<Song | null>(null);
-  const urlCache = useRef<Map<string, string>>(new Map());
   const statusRef = useRef(status);
   statusRef.current = status;
 
@@ -54,12 +45,8 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
           AsyncStorage.getItem(LIKED_KEY),
           AsyncStorage.getItem(HISTORY_KEY),
         ]);
-        if (l) {
-          const parsed = JSON.parse(l) as Record<string, Song>;
-          for (const k of Object.keys(parsed)) parsed[k] = stripStaleUrl(parsed[k]);
-          setLiked(parsed);
-        }
-        if (h) setHistory((JSON.parse(h) as Song[]).map(stripStaleUrl));
+        if (l) setLiked(JSON.parse(l));
+        if (h) setHistory(JSON.parse(h));
       } catch {}
     })();
   }, []);
@@ -72,41 +59,20 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
     AsyncStorage.setItem(HISTORY_KEY, JSON.stringify(history.slice(0, 50))).catch(() => {});
   }, [history]);
 
-  const withUrl = useCallback(async (song: Song): Promise<Song> => {
-    if (song.source === "youtube" && song.videoId) {
-      const cached = urlCache.current.get(song.videoId);
-      if (cached) return { ...song, url: cached };
-      const url = await resolveYouTubeStream(song.videoId);
-      urlCache.current.set(song.videoId, url);
-      return { ...song, url };
-    }
-    return song;
-  }, []);
-
   const play = useCallback(
-    async (song: Song, q?: Song[]) => {
+    (song: Song, q?: Song[]) => {
       const list = q ?? [song];
       queueRef.current = list;
       setQueue(list);
       currentRef.current = song;
       setCurrent(song);
-      setResolving(true);
       try {
-        const full = await withUrl(song);
-        queueRef.current = queueRef.current.map((s) => (s.id === full.id ? full : s));
-        setQueue([...queueRef.current]);
-        currentRef.current = full;
-        setCurrent(full);
-        player.replace({ uri: full.url });
+        player.replace({ uri: song.url });
         player.play();
-        setHistory((h) => [full, ...h.filter((x) => x.id !== full.id)].slice(0, 50));
-      } catch {
-        // stream resolve failed — thumbnail/title stay visible, user can retry
-      } finally {
-        setResolving(false);
-      }
+      } catch {}
+      setHistory((h) => [song, ...h.filter((x) => x.id !== song.id)].slice(0, 50));
     },
-    [player, withUrl]
+    [player]
   );
 
   const toggle = useCallback(() => {
@@ -117,15 +83,24 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
   }, [player]);
 
   const step = useCallback(
-    async (dir: 1 | -1) => {
+    (dir: 1 | -1) => {
       const q = queueRef.current;
       const cur = currentRef.current;
       if (!cur || q.length === 0) return;
       const i = q.findIndex((s) => s.id === cur.id);
       const nxt = q[(i + dir + q.length) % q.length];
-      if (nxt) await play(nxt, q);
+      if (!nxt) return;
+      queueRef.current = q;
+      setQueue(q);
+      currentRef.current = nxt;
+      setCurrent(nxt);
+      try {
+        player.replace({ uri: nxt.url });
+        player.play();
+      } catch {}
+      setHistory((h) => [nxt, ...h.filter((x) => x.id !== nxt.id)].slice(0, 50));
     },
-    [play]
+    [player]
   );
 
   const stepRef = useRef(step);
@@ -180,7 +155,7 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
       isPlaying: !!status.playing,
       position: status.currentTime ?? 0,
       duration: status.duration ?? current?.duration ?? 0,
-      loading: !status.isLoaded || resolving,
+      loading: !status.isLoaded,
       liked,
       history,
       toggleLike,
@@ -191,7 +166,7 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
       prev,
       seek,
     }),
-    [current, queue, status, resolving, liked, history, play, toggle, next, prev, seek, toggleLike, isLiked]
+    [current, queue, status, liked, history, play, toggle, next, prev, seek, toggleLike, isLiked]
   );
 
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;

@@ -1,10 +1,8 @@
-export type SaavnImage = { quality: string; url: string };
-export type SaavnDownload = { quality: string; url: string };
+export type ArtImage = { quality: string; url: string };
+export type StreamFile = { quality: string; url: string };
 
 export type Song = {
   id: string;
-  source: "saavn" | "youtube";
-  videoId?: string;
   name: string;
   albumName: string;
   albumId: string;
@@ -19,21 +17,22 @@ export type Song = {
   artists: string;
   artistIds: string;
   url: string; // stream url 320kbps preferred
-  downloadUrl: SaavnDownload[];
+  downloadUrl: StreamFile[];
 };
 
+// Free music API mirrors (tried in order, first working one wins).
 const MIRRORS = [
   "https://saavnx.vercel.app",
   "https://saavn.sumit.co",
   "https://saavn.dev",
 ];
 
-function pickImage(images: SaavnImage[] | undefined, q = "500x500"): string {
+function pickImage(images: ArtImage[] | undefined, q = "500x500"): string {
   if (!images || images.length === 0) return "";
   return images.find((i) => i.quality === q)?.url ?? images[images.length - 1].url;
 }
 
-function pickStream(downloads: SaavnDownload[] | undefined): string {
+function pickStream(downloads: StreamFile[] | undefined): string {
   if (!downloads || downloads.length === 0) return "";
   const pref = ["320kbps", "160kbps", "96kbps", "48kbps", "12kbps"];
   for (const q of pref) {
@@ -48,7 +47,6 @@ export function normalizeSong(raw: any): Song {
   const artists = primary.map((a) => a.name).join(", ") || raw?.primaryArtists || "Unknown Artist";
   return {
     id: String(raw.id),
-    source: "saavn",
     name: decodeHtml(raw.name ?? "Unknown"),
     albumName: decodeHtml(raw?.album?.name ?? ""),
     albumId: String(raw?.album?.id ?? ""),

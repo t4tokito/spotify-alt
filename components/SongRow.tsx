@@ -1,6 +1,6 @@
 import { Image, Pressable, StyleSheet, Text, View } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
-import type { Song } from "../lib/saavn";
+import type { Song } from "../lib/music";
 import { usePlayer } from "../lib/player";
 
 export function SongRow({ song, queue, index }: { song: Song; queue: Song[]; index?: number }) {

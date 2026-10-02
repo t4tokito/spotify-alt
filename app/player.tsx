@@ -4,7 +4,7 @@ import { useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { usePlayer } from "../lib/player";
-import { formatTime } from "../lib/saavn";
+import { formatTime } from "../lib/music";
 
 export default function PlayerScreen() {
   const insets = useSafeAreaInsets();

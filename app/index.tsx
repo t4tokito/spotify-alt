@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { ActivityIndicator, FlatList, Image, Pressable, RefreshControl, ScrollView, StyleSheet, Text, View } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { HOME_SECTIONS, Song, searchSongs } from "../lib/saavn";
+import { HOME_SECTIONS, Song, searchSongs } from "../lib/music";
 import { usePlayer } from "../lib/player";
 import { SongRow } from "../components/SongRow";
 
