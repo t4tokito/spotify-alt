@@ -133,11 +133,9 @@ const s = StyleSheet.create({
   heading: { color: "#fff", fontSize: 30, fontWeight: "900", letterSpacing: 1 },
   headingSub: { color: "rgba(255,255,255,0.7)", fontSize: 13, marginTop: 4 },
   input: {
-    backgroundColor: "rgba(18,18,18,0.78)",
-    borderWidth: 1,
-    borderColor: "rgba(255,255,255,0.14)",
+    backgroundColor: "rgba(18,18,18,0.45)",
     borderRadius: 12,
-    padding: 15,
+    padding: 18,
     fontSize: 16,
     color: "#fff",
   },
