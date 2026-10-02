@@ -1,4 +1,4 @@
-import { View } from "react-native";
+import { StyleSheet, View } from "react-native";
 import { useRouter } from "expo-router";
 import { AuthBg, AuthBrand, AuthButton, AuthSecondaryButton } from "../components/AuthUI";
 
@@ -6,11 +6,18 @@ export default function Welcome() {
   const router = useRouter();
   return (
     <AuthBg>
-      <View style={{ flex: 1, paddingTop: 40 }}>
+      <View style={s.block}>
         <AuthBrand />
+        <View style={s.btns}>
+          <AuthButton title="SIGN UP" onPress={() => router.push("/signup")} />
+          <AuthSecondaryButton title="LOG IN" onPress={() => router.push("/login")} />
+        </View>
       </View>
-      <AuthButton title="SIGN UP" onPress={() => router.push("/signup")} />
-      <AuthSecondaryButton title="LOG IN" onPress={() => router.push("/login")} />
     </AuthBg>
   );
 }
+
+const s = StyleSheet.create({
+  block: { gap: 18, marginBottom: 44 },
+  btns: { gap: 12 },
+});
