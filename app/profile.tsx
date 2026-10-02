@@ -24,18 +24,18 @@ export default function Profile() {
       </View>
       <View style={s.stats}>
         <View style={s.stat}>
-          <Ionicons name="heart" size={20} color="#790D16" />
+          <Ionicons name="heart" size={20} color="#BC8CF2" />
           <Text style={s.statNum}>{likedCount}</Text>
           <Text style={s.statLabel}>Liked</Text>
         </View>
         <View style={s.stat}>
-          <Ionicons name="time-outline" size={20} color="#790D16" />
+          <Ionicons name="time-outline" size={20} color="#BC8CF2" />
           <Text style={s.statNum}>{history.length}</Text>
           <Text style={s.statLabel}>Played</Text>
         </View>
       </View>
       <Pressable onPress={signOut} style={s.outBtn}>
-        <Ionicons name="log-out-outline" size={20} color="#fff" />
+        <Ionicons name="log-out-outline" size={20} color="#141414" />
         <Text style={s.outText}>Log Out</Text>
       </Pressable>
     </View>
@@ -48,9 +48,9 @@ const s = StyleSheet.create({
   card: { backgroundColor: "#1e1e1e", borderRadius: 14, padding: 24, alignItems: "center" },
   avatar: {
     width: 84, height: 84, borderRadius: 42,
-    backgroundColor: "#790D16", alignItems: "center", justifyContent: "center",
+    backgroundColor: "#BC8CF2", alignItems: "center", justifyContent: "center",
   },
-  avatarText: { color: "#fff", fontSize: 34, fontWeight: "900" },
+  avatarText: { color: "#141414", fontSize: 34, fontWeight: "900" },
   name: { color: "#fff", fontSize: 22, fontWeight: "800", marginTop: 12 },
   email: { color: "#888", marginTop: 4 },
   stats: { flexDirection: "row", gap: 12, marginTop: 12 },
@@ -59,7 +59,7 @@ const s = StyleSheet.create({
   statLabel: { color: "#888", fontSize: 12 },
   outBtn: {
     flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 8,
-    backgroundColor: "#790D16", borderRadius: 24, paddingVertical: 14, marginTop: 20,
+    backgroundColor: "#BC8CF2", borderRadius: 24, paddingVertical: 14, marginTop: 20,
   },
-  outText: { color: "#fff", fontWeight: "800", fontSize: 16 },
+  outText: { color: "#141414", fontWeight: "800", fontSize: 16 },
 });

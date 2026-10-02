@@ -3,7 +3,8 @@ import { LinearGradient } from "expo-linear-gradient";
 import { Ionicons } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
-export const MAROON = "#790D16";
+export const ACCENT = "#BC8CF2";
+const ON_ACCENT = "#141414";
 const BG = require("../assets/login.jpeg");
 
 /** Full-screen photo background with dark overlay (auth screens). */
@@ -27,9 +28,9 @@ export function AuthBg({ children }: { children: React.ReactNode }) {
 export function AuthBrand({ tagline = "Never Lost. Discover New Music." }: { tagline?: string }) {
   return (
     <View>
-      <View style={s.disc}>
-        <Ionicons name="musical-note" size={30} color="#fff" />
-      </View>
+        <View style={s.disc}>
+          <Ionicons name="musical-note" size={30} color={ON_ACCENT} />
+        </View>
       <Text style={s.brandName}>Tokito{"\n"}Music</Text>
       <Text style={s.tagline}>{tagline}</Text>
     </View>
@@ -85,7 +86,7 @@ export function AuthButton({
 }) {
   return (
     <Pressable onPress={onPress} disabled={busy} style={[s.btn, busy && s.btnBusy]}>
-      {busy ? <ActivityIndicator color="#fff" /> : <Text style={s.btnText}>{title}</Text>}
+      {busy ? <ActivityIndicator color={ON_ACCENT} /> : <Text style={s.btnText}>{title}</Text>}
     </Pressable>
   );
 }
@@ -124,7 +125,7 @@ const s = StyleSheet.create({
   brandRow: { flexDirection: "row", alignItems: "center", gap: 10 },
   disc: {
     width: 52, height: 52, borderRadius: 26,
-    backgroundColor: MAROON, alignItems: "center", justifyContent: "center",
+    backgroundColor: ACCENT, alignItems: "center", justifyContent: "center",
   },
   brandName: { color: "#fff", fontSize: 52, fontWeight: "900", lineHeight: 56, marginTop: 14 },
   tagline: { color: "rgba(255,255,255,0.75)", fontSize: 13, marginTop: 8 },
@@ -137,10 +138,10 @@ const s = StyleSheet.create({
     fontSize: 16,
     color: "#fff",
   },
-  btn: { backgroundColor: MAROON, borderRadius: 28, paddingVertical: 16, alignItems: "center", marginTop: 6 },
+  btn: { backgroundColor: ACCENT, borderRadius: 28, paddingVertical: 16, alignItems: "center", marginTop: 6 },
   btnDark: { backgroundColor: "rgba(20,20,20,0.85)", borderRadius: 28, paddingVertical: 16, alignItems: "center" },
   btnBusy: { opacity: 0.7 },
-  btnText: { color: "#fff", fontWeight: "800", fontSize: 15, letterSpacing: 1 },
+  btnText: { color: ON_ACCENT, fontWeight: "800", fontSize: 15, letterSpacing: 1 },
   error: { color: "#ff9d9d", fontSize: 13, lineHeight: 18 },
   hint: { color: "rgba(255,255,255,0.7)", fontSize: 13 },
   hintOk: { color: "#7ddba3" },

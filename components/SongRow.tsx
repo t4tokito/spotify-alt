@@ -20,10 +20,10 @@ export function SongRow({ song, queue, index }: { song: Song; queue: Song[]; ind
         </Text>
       </View>
       {active && isPlaying ? (
-        <Ionicons name="stats-chart" size={18} color="#790D16" />
+        <Ionicons name="stats-chart" size={18} color="#BC8CF2" />
       ) : null}
       <Pressable onPress={() => toggleLike(song)} hitSlop={10} style={s.like}>
-        <Ionicons name={liked ? "heart" : "heart-outline"} size={20} color={liked ? "#790D16" : "#888"} />
+        <Ionicons name={liked ? "heart" : "heart-outline"} size={20} color={liked ? "#BC8CF2" : "#888"} />
       </Pressable>
     </Pressable>
   );
@@ -35,7 +35,7 @@ const s = StyleSheet.create({
   art: { width: 52, height: 52, borderRadius: 6, backgroundColor: "#222" },
   mid: { flex: 1 },
   title: { color: "#fff", fontSize: 15, fontWeight: "600" },
-  activeText: { color: "#790D16" },
+  activeText: { color: "#BC8CF2" },
   sub: { color: "#999", fontSize: 13, marginTop: 2 },
   like: { padding: 6 },
 });

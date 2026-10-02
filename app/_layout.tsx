@@ -30,7 +30,7 @@ function Shell({ children }: { children: React.ReactNode }) {
   if (initializing) {
     return (
       <View style={{ flex: 1, alignItems: "center", justifyContent: "center", backgroundColor: "#121212" }}>
-        <ActivityIndicator color="#790D16" size="large" />
+        <ActivityIndicator color="#BC8CF2" size="large" />
       </View>
     );
   }

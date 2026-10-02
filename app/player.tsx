@@ -16,7 +16,7 @@ export default function PlayerScreen() {
       <View style={[s.root, { paddingTop: insets.top, justifyContent: "center", alignItems: "center" }]}>
         <Text style={{ color: "#888" }}>Koi gaana play nahi ho raha</Text>
         <Pressable onPress={() => router.back()} style={s.backBtn}>
-          <Text style={{ color: "#fff" }}>Back</Text>
+          <Text style={{ color: "#141414" }}>Back</Text>
         </Pressable>
       </View>
     );
@@ -26,7 +26,7 @@ export default function PlayerScreen() {
   const progress = duration > 0 ? position / duration : 0;
 
   return (
-    <LinearGradient colors={["#790D1644", "#121212"]} style={[s.root, { paddingTop: insets.top }]}>
+    <LinearGradient colors={["#BC8CF244", "#121212"]} style={[s.root, { paddingTop: insets.top }]}>
       <Pressable onPress={() => router.back()} style={s.down} hitSlop={12}>
         <Ionicons name="chevron-down" size={30} color="#fff" />
       </Pressable>
@@ -37,7 +37,7 @@ export default function PlayerScreen() {
           <Text numberOfLines={1} style={s.artist}>{current.artists}</Text>
         </View>
         <Pressable onPress={() => toggleLike(current)} hitSlop={10}>
-          <Ionicons name={liked ? "heart" : "heart-outline"} size={28} color={liked ? "#790D16" : "#fff"} />
+          <Ionicons name={liked ? "heart" : "heart-outline"} size={28} color={liked ? "#BC8CF2" : "#fff"} />
         </Pressable>
       </View>
 
@@ -90,14 +90,14 @@ const s = StyleSheet.create({
   artist: { color: "#aaa", fontSize: 15, marginTop: 4 },
   barWrap: { marginTop: 20 },
   barBg: { height: 5, backgroundColor: "#333", borderRadius: 3, overflow: "hidden" },
-  barFill: { height: 5, backgroundColor: "#790D16" },
+  barFill: { height: 5, backgroundColor: "#BC8CF2" },
   times: { flexDirection: "row", justifyContent: "space-between", marginTop: 6 },
   time: { color: "#888", fontSize: 12 },
   seekRow: { flexDirection: "row", justifyContent: "center", gap: 24, marginTop: 6 },
   skip: { padding: 6 },
-  skipText: { color: "#790D16", fontWeight: "700" },
+  skipText: { color: "#BC8CF2", fontWeight: "700" },
   controls: { flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 36, marginTop: 22 },
   playBtn: { backgroundColor: "#fff", width: 76, height: 76, borderRadius: 38, alignItems: "center", justifyContent: "center" },
   free: { color: "#666", textAlign: "center", marginTop: 26, fontSize: 12 },
-  backBtn: { marginTop: 16, backgroundColor: "#790D16", paddingHorizontal: 24, paddingVertical: 10, borderRadius: 20 },
+  backBtn: { marginTop: 16, backgroundColor: "#BC8CF2", paddingHorizontal: 24, paddingVertical: 10, borderRadius: 20 },
 });

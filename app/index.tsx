@@ -38,7 +38,7 @@ export default function Home() {
   if (loading) {
     return (
       <View style={[s.center, { paddingTop: insets.top }]}>
-        <ActivityIndicator color="#790D16" size="large" />
+        <ActivityIndicator color="#BC8CF2" size="large" />
         <Text style={s.loadText}>Loading Tokito Music… 100% Free, No Ads</Text>
       </View>
     );
@@ -47,9 +47,9 @@ export default function Home() {
   return (
     <ScrollView
       style={[s.root, { paddingTop: insets.top }]}
-      refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => { setRefreshing(true); load(); }} tintColor="#790D16" />}
+      refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => { setRefreshing(true); load(); }} tintColor="#BC8CF2" />}
     >
-      <LinearGradient colors={["#790D1633", "#121212"]} style={s.hero}>
+      <LinearGradient colors={["#BC8CF233", "#121212"]} style={s.hero}>
         <View style={s.greetRow}>
           <Text style={s.greet}>Good evening</Text>
           <Ionicons name="headset-outline" size={16} color="#ccc" />
@@ -82,7 +82,7 @@ export default function Home() {
         <View key={sec.title}>
           {sec.icon ? (
             <View style={s.secHeader}>
-              <Ionicons name={sec.icon as any} size={20} color="#790D16" />
+              <Ionicons name={sec.icon as any} size={20} color="#BC8CF2" />
               <Text style={s.secTitlePlain}>{sec.title}</Text>
             </View>
           ) : (
@@ -121,7 +121,7 @@ const s = StyleSheet.create({
   greet: { color: "#ccc", fontSize: 14 },
   greetRow: { flexDirection: "row", alignItems: "center", gap: 6 },
   brand: { color: "#fff", fontSize: 34, fontWeight: "900", marginTop: 4 },
-  tag: { color: "#790D16", fontWeight: "700", marginTop: 6 },
+  tag: { color: "#BC8CF2", fontWeight: "700", marginTop: 6 },
   secTitle: { color: "#fff", fontSize: 20, fontWeight: "800", paddingHorizontal: 16, marginTop: 22, marginBottom: 12 },
   secHeader: { flexDirection: "row", alignItems: "center", gap: 8, paddingHorizontal: 16, marginTop: 22, marginBottom: 12 },
   secTitlePlain: { color: "#fff", fontSize: 20, fontWeight: "800" },

@@ -14,7 +14,7 @@ export default function Library() {
       <Text style={s.title}>Your Library</Text>
       <Text style={s.count}>{likedList.length} Liked • {history.length} Played</Text>
       <View style={s.secHeader}>
-        <Ionicons name="heart" size={18} color="#790D16" />
+        <Ionicons name="heart" size={18} color="#BC8CF2" />
         <Text style={s.secTitle}>Liked Songs</Text>
       </View>
       <FlatList
@@ -25,7 +25,7 @@ export default function Library() {
         ListFooterComponent={
           <View>
             <View style={s.secHeader}>
-              <Ionicons name="time-outline" size={18} color="#790D16" />
+              <Ionicons name="time-outline" size={18} color="#BC8CF2" />
               <Text style={s.secTitle}>History</Text>
             </View>
             {history.map((song) => (
@@ -41,7 +41,7 @@ export default function Library() {
 const s = StyleSheet.create({
   root: { flex: 1, backgroundColor: "#121212" },
   title: { color: "#fff", fontSize: 28, fontWeight: "900", paddingHorizontal: 16 },
-  count: { color: "#790D16", paddingHorizontal: 16, marginTop: 4, fontWeight: "600" },
+  count: { color: "#BC8CF2", paddingHorizontal: 16, marginTop: 4, fontWeight: "600" },
   secHeader: { flexDirection: "row", alignItems: "center", gap: 8, paddingHorizontal: 16, marginTop: 18, marginBottom: 6 },
   secTitle: { color: "#fff", fontSize: 18, fontWeight: "800" },
   empty: { color: "#777", paddingHorizontal: 16, marginTop: 8 },
