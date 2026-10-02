@@ -1,13 +1,11 @@
 import { useEffect, useState } from "react";
 import { StyleSheet, Text, View } from "react-native";
 import { useRouter } from "expo-router";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { authErrorMessage, useAuth } from "../lib/auth";
 import { isUsernameAvailable, validateEmail, validatePassword, validateUsername } from "../lib/usernames";
-import { AuthButton, AuthError, AuthHint, AuthInput, AuthLink, AuthShell } from "../components/AuthUI";
+import { AuthBg, AuthButton, AuthError, AuthHeading, AuthHint, AuthInput, AuthLink } from "../components/AuthUI";
 
 export default function Signup() {
-  const insets = useSafeAreaInsets();
   const router = useRouter();
   const { signUp } = useAuth();
   const [username, setUsername] = useState("");
@@ -53,27 +51,25 @@ export default function Signup() {
   }
 
   return (
-    <AuthShell>
-      <View style={{ height: insets.top }} />
-      <Text style={s.brand}>Create account</Text>
-      <Text style={s.sub}>Username • Email • Password</Text>
+    <AuthBg>
+      <View style={{ flex: 1, paddingTop: 40 }}>
+        <AuthHeading title="SIGN UP" sub="Never Lost. Discover New Music." />
+      </View>
       <AuthInput value={username} onChangeText={setUsername} placeholder="Username (5-15 characters)" />
       <AuthHint msg={nameStatus} ok={nameStatus.includes("available")} />
-      <AuthInput value={email} onChangeText={setEmail} placeholder="Email" keyboardType="email-address" />
+      <AuthInput value={email} onChangeText={setEmail} placeholder="Email address" keyboardType="email-address" />
       <AuthInput value={password} onChangeText={setPassword} placeholder="Password (min 8 characters)" secure />
       <AuthError msg={error} />
-      <AuthButton title="Sign Up" onPress={onSignup} busy={busy} />
+      <AuthButton title="CREATE ACCOUNT" onPress={onSignup} busy={busy} />
       <View style={s.row}>
         <Text style={s.muted}>Already have an account? </Text>
         <AuthLink label="Log in" onPress={() => router.replace("/login")} />
       </View>
-    </AuthShell>
+    </AuthBg>
   );
 }
 
 const s = StyleSheet.create({
-  brand: { color: "#fff", fontSize: 30, fontWeight: "900", textAlign: "center" },
-  sub: { color: "#888", textAlign: "center", marginBottom: 12 },
   row: { flexDirection: "row", justifyContent: "center", marginTop: 8 },
-  muted: { color: "#888" },
+  muted: { color: "rgba(255,255,255,0.7)" },
 });

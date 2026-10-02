@@ -9,7 +9,7 @@ import { PlayerProvider } from "../lib/player";
 import { BottomNav } from "../components/BottomNav";
 import { MiniPlayer } from "../components/MiniPlayer";
 
-const AUTH_SCREENS = ["login", "signup", "forgot-password"];
+const AUTH_SCREENS = ["welcome", "login", "signup", "forgot-password"];
 
 function Shell({ children }: { children: React.ReactNode }) {
   const { user, initializing } = useAuth();
@@ -21,7 +21,7 @@ function Shell({ children }: { children: React.ReactNode }) {
     if (initializing) return;
     const onAuthScreen = AUTH_SCREENS.includes(segments[0] as string);
     if (!user && !onAuthScreen) {
-      router.replace("/login");
+      router.replace("/welcome");
     } else if (user && onAuthScreen) {
       router.replace("/");
     }
@@ -63,6 +63,7 @@ export default function RootLayout() {
                 <Stack.Screen name="search" />
                 <Stack.Screen name="library" />
                 <Stack.Screen name="profile" />
+                <Stack.Screen name="welcome" />
                 <Stack.Screen name="login" />
                 <Stack.Screen name="signup" />
                 <Stack.Screen name="forgot-password" />

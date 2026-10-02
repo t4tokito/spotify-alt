@@ -1,12 +1,10 @@
 import { useState } from "react";
 import { StyleSheet, Text, View } from "react-native";
 import { useRouter } from "expo-router";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { authErrorMessage, useAuth } from "../lib/auth";
-import { AuthButton, AuthError, AuthInput, AuthLink, AuthShell } from "../components/AuthUI";
+import { AuthBg, AuthButton, AuthError, AuthHeading, AuthInput, AuthLink } from "../components/AuthUI";
 
 export default function ForgotPassword() {
-  const insets = useSafeAreaInsets();
   const router = useRouter();
   const { resetPassword } = useAuth();
   const [email, setEmail] = useState("");
@@ -28,26 +26,24 @@ export default function ForgotPassword() {
   }
 
   return (
-    <AuthShell>
-      <View style={{ height: insets.top }} />
-      <Text style={s.brand}>Password reset</Text>
-      <Text style={s.sub}>Enter your email, we'll send a reset link.</Text>
+    <AuthBg>
+      <View style={{ flex: 1, paddingTop: 40 }}>
+        <AuthHeading title="RESET PASSWORD" sub="Enter your email, we'll send a reset link." />
+      </View>
       {done ? (
         <Text style={s.ok}>Link sent. Check your inbox (and spam folder), then log in.</Text>
       ) : (
         <>
-          <AuthInput value={email} onChangeText={setEmail} placeholder="Email" keyboardType="email-address" />
+          <AuthInput value={email} onChangeText={setEmail} placeholder="Email address" keyboardType="email-address" />
           <AuthError msg={error} />
-          <AuthButton title="Send Reset Link" onPress={onSend} busy={busy} />
+          <AuthButton title="SEND RESET LINK" onPress={onSend} busy={busy} />
         </>
       )}
       <AuthLink label="Back to login" onPress={() => router.replace("/login")} />
-    </AuthShell>
+    </AuthBg>
   );
 }
 
 const s = StyleSheet.create({
-  brand: { color: "#fff", fontSize: 30, fontWeight: "900", textAlign: "center" },
-  sub: { color: "#888", textAlign: "center", marginBottom: 12 },
-  ok: { color: "#4caf7d", textAlign: "center", lineHeight: 20 },
+  ok: { color: "#7ddba3", textAlign: "center", lineHeight: 20 },
 });

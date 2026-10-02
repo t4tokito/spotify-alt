@@ -1,6 +1,51 @@
-import { ActivityIndicator, Pressable, StyleSheet, Text, TextInput, View } from "react-native";
+import { ActivityIndicator, ImageBackground, Pressable, StyleSheet, Text, TextInput, View } from "react-native";
+import { LinearGradient } from "expo-linear-gradient";
+import { Ionicons } from "@expo/vector-icons";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 export const MAROON = "#790D16";
+const BG = require("../assets/login.jpeg");
+
+/** Full-screen photo background with dark overlay (auth screens). */
+export function AuthBg({ children }: { children: React.ReactNode }) {
+  const insets = useSafeAreaInsets();
+  return (
+    <ImageBackground source={BG} style={s.bg} resizeMode="cover">
+      <View style={s.overlay} />
+      <LinearGradient
+        colors={["rgba(0,0,0,0.25)", "rgba(0,0,0,0.55)", "rgba(0,0,0,0.88)"]}
+        style={s.gradient}
+      />
+      <View style={[s.content, { paddingTop: insets.top + 16, paddingBottom: insets.bottom + 28 }]}>
+        {children}
+      </View>
+    </ImageBackground>
+  );
+}
+
+/** Brand mark: maroon disc with music note + name. */
+export function AuthBrand({ tagline = "Never Lost. Discover New Music." }: { tagline?: string }) {
+  return (
+    <View>
+      <View style={s.brandRow}>
+        <View style={s.disc}>
+          <Ionicons name="musical-note" size={26} color="#fff" />
+        </View>
+        <Text style={s.brandName}>Tokito Music</Text>
+      </View>
+      <Text style={s.tagline}>{tagline}</Text>
+    </View>
+  );
+}
+
+export function AuthHeading({ title, sub }: { title: string; sub?: string }) {
+  return (
+    <View>
+      <Text style={s.heading}>{title}</Text>
+      {sub ? <Text style={s.headingSub}>{sub}</Text> : null}
+    </View>
+  );
+}
 
 export function AuthInput({
   value,
@@ -22,7 +67,7 @@ export function AuthInput({
       value={value}
       onChangeText={onChangeText}
       placeholder={placeholder}
-      placeholderTextColor="#777"
+      placeholderTextColor="#999"
       secureTextEntry={secure}
       autoCapitalize={autoCapitalize}
       keyboardType={keyboardType}
@@ -47,6 +92,14 @@ export function AuthButton({
   );
 }
 
+export function AuthSecondaryButton({ title, onPress }: { title: string; onPress: () => void }) {
+  return (
+    <Pressable onPress={onPress} style={s.btnDark}>
+      <Text style={s.btnText}>{title}</Text>
+    </Pressable>
+  );
+}
+
 export function AuthError({ msg }: { msg: string }) {
   if (!msg) return null;
   return <Text style={s.error}>{msg}</Text>;
@@ -65,26 +118,35 @@ export function AuthLink({ label, onPress }: { label: string; onPress: () => voi
   );
 }
 
-export function AuthShell({ children }: { children: React.ReactNode }) {
-  return <View style={s.shell}>{children}</View>;
-}
-
 const s = StyleSheet.create({
-  shell: { flex: 1, backgroundColor: "#121212", padding: 24, justifyContent: "center", gap: 12 },
+  bg: { flex: 1 },
+  overlay: { ...StyleSheet.absoluteFill, backgroundColor: "rgba(0,0,0,0.45)" },
+  gradient: { ...StyleSheet.absoluteFill },
+  content: { flex: 1, paddingHorizontal: 24, gap: 12, justifyContent: "flex-end" },
+  brandRow: { flexDirection: "row", alignItems: "center", gap: 10 },
+  disc: {
+    width: 44, height: 44, borderRadius: 22,
+    backgroundColor: MAROON, alignItems: "center", justifyContent: "center",
+  },
+  brandName: { color: "#fff", fontSize: 26, fontWeight: "900" },
+  tagline: { color: "rgba(255,255,255,0.75)", fontSize: 13, marginTop: 8 },
+  heading: { color: "#fff", fontSize: 30, fontWeight: "900", letterSpacing: 1 },
+  headingSub: { color: "rgba(255,255,255,0.7)", fontSize: 13, marginTop: 4 },
   input: {
-    backgroundColor: "#1e1e1e",
+    backgroundColor: "rgba(18,18,18,0.78)",
     borderWidth: 1,
-    borderColor: "#333",
-    borderRadius: 10,
-    padding: 14,
+    borderColor: "rgba(255,255,255,0.14)",
+    borderRadius: 12,
+    padding: 15,
     fontSize: 16,
     color: "#fff",
   },
-  btn: { backgroundColor: MAROON, borderRadius: 24, paddingVertical: 15, alignItems: "center", marginTop: 6 },
+  btn: { backgroundColor: MAROON, borderRadius: 28, paddingVertical: 16, alignItems: "center", marginTop: 6 },
+  btnDark: { backgroundColor: "rgba(20,20,20,0.85)", borderRadius: 28, paddingVertical: 16, alignItems: "center" },
   btnBusy: { opacity: 0.7 },
-  btnText: { color: "#fff", fontWeight: "800", fontSize: 16 },
-  error: { color: "#ff8080", fontSize: 13, lineHeight: 18 },
-  hint: { color: "#888", fontSize: 13 },
-  hintOk: { color: "#4caf7d" },
+  btnText: { color: "#fff", fontWeight: "800", fontSize: 15, letterSpacing: 1 },
+  error: { color: "#ff9d9d", fontSize: 13, lineHeight: 18 },
+  hint: { color: "rgba(255,255,255,0.7)", fontSize: 13 },
+  hintOk: { color: "#7ddba3" },
   link: { color: "#fff", fontWeight: "700", textDecorationLine: "underline", textAlign: "center" },
 });
