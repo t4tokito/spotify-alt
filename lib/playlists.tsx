@@ -76,7 +76,9 @@ export function PlaylistProvider({ children }: { children: React.ReactNode }) {
           return [...map.values()].sort((a, b) => b.createdAt - a.createdAt);
           });
         }
-      } catch {}
+      } catch (e) {
+        console.warn("cloud sync (playlists) failed:", e);
+      }
       if (!cancelled) cloudReady.current = true;
     })();
     return () => {

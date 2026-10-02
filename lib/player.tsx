@@ -84,7 +84,9 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
           const seen = new Set(prev.map((s) => s.id));
           return [...prev, ...cHist.filter((s) => !seen.has(s.id))].slice(0, 50);
         });
-      } catch {}
+      } catch (e) {
+        console.warn("cloud sync (liked/history) failed:", e);
+      }
       if (!cancelled) cloudReady.current = true;
     })();
     return () => {
