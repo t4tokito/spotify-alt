@@ -28,7 +28,6 @@ export default function Home() {
       ];
       setSections(all.filter((r) => r.songs.length > 0));
     } catch {}
-    } catch {}
     setLoading(false);
     setRefreshing(false);
   }
