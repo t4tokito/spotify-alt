@@ -24,12 +24,12 @@ export default function Profile() {
       </View>
       <View style={s.stats}>
         <View style={s.stat}>
-          <Ionicons name="heart" size={20} color="#BC8CF2" />
+          <Ionicons name="heart" size={20} color="#FF5C7A" />
           <Text style={s.statNum}>{likedCount}</Text>
           <Text style={s.statLabel}>Liked</Text>
         </View>
         <View style={s.stat}>
-          <Ionicons name="time-outline" size={20} color="#BC8CF2" />
+          <Ionicons name="time-outline" size={20} color="#8E8E93" />
           <Text style={s.statNum}>{history.length}</Text>
           <Text style={s.statLabel}>Played</Text>
         </View>

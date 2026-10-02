@@ -6,6 +6,8 @@ import { Ionicons } from "@expo/vector-icons";
 import { usePlayer } from "../lib/player";
 import { usePlaylists } from "../lib/playlists";
 import { SongRow } from "../components/SongRow";
+import { SectionTitle } from "../components/SectionTitle";
+import { C } from "../lib/theme";
 
 export default function Library() {
   const insets = useSafeAreaInsets();
@@ -30,12 +32,16 @@ export default function Library() {
         {playlists.length} Playlists • {likedList.length} Liked • {history.length} Played
       </Text>
 
-      <View style={s.secHeader}>
-        <Ionicons name="list" size={18} color="#BC8CF2" />
-        <Text style={s.secTitle}>Playlists</Text>
-        <View style={{ flex: 1 }} />
-        <Pressable onPress={() => setCreating((v) => !v)} hitSlop={8} style={s.addBtn}>
-          <Ionicons name={creating ? "close" : "add"} size={20} color="#BC8CF2" />
+      <View style={s.plHeader}>
+        <View style={s.plTitleWrap}>
+          <SectionTitle title={`Playlists (${playlists.length})`} icon="list" color={C.accent} size={18} tight />
+        </View>
+        <Pressable
+          onPress={() => setCreating((v) => !v)}
+          hitSlop={8}
+          style={({ pressed }) => [s.addBtn, pressed && { opacity: 0.55 }]}
+        >
+          <Ionicons name={creating ? "close" : "add"} size={22} color={C.accent} />
         </Pressable>
       </View>
       {creating && (
@@ -54,25 +60,26 @@ export default function Library() {
         </View>
       )}
       {playlists.map((pl) => (
-        <Pressable key={pl.id} onPress={() => router.push(`/playlist/${pl.id}` as any)} style={s.plRow}>
+        <Pressable
+          key={pl.id}
+          onPress={() => router.push(`/playlist/${pl.id}` as any)}
+          style={({ pressed }) => [s.plRow, pressed && { opacity: 0.6 }]}
+        >
           <View style={s.plArt}>
-            <Ionicons name="musical-notes" size={22} color="#BC8CF2" />
+            <Ionicons name="musical-notes" size={22} color={C.accent} />
           </View>
           <View style={s.mid}>
             <Text numberOfLines={1} style={s.plName}>{pl.name}</Text>
             <Text style={s.plSub}>{pl.songs.length} songs</Text>
           </View>
-          <Ionicons name="chevron-forward" size={20} color="#666" />
+          <Ionicons name="chevron-forward" size={20} color={C.neutral} />
         </Pressable>
       ))}
       {playlists.length === 0 && !creating && (
         <Text style={s.empty}>No playlists yet — tap + to make one, or add any song from its list icon.</Text>
       )}
 
-      <View style={s.secHeader}>
-        <Ionicons name="heart" size={18} color="#BC8CF2" />
-        <Text style={s.secTitle}>Liked Songs</Text>
-      </View>
+      <SectionTitle title="Liked Songs" icon="heart" color={C.like} size={18} />
       <FlatList
         data={likedList}
         keyExtractor={(i) => i.id}
@@ -81,10 +88,7 @@ export default function Library() {
         ListEmptyComponent={<Text style={s.empty}>Nothing liked yet.</Text>}
         ListFooterComponent={
           <View>
-            <View style={s.secHeader}>
-              <Ionicons name="time-outline" size={18} color="#BC8CF2" />
-              <Text style={s.secTitle}>History</Text>
-            </View>
+            <SectionTitle title="History" icon="time-outline" color={C.neutral} size={18} />
             {history.map((song) => (
               <SongRow key={"h" + song.id} song={song} queue={history} />
             ))}
@@ -97,19 +101,19 @@ export default function Library() {
 
 const s = StyleSheet.create({
   root: { flex: 1, backgroundColor: "#121212" },
-  title: { color: "#fff", fontSize: 28, fontWeight: "900", paddingHorizontal: 16 },
+  title: { color: "#fff", fontSize: 28, fontWeight: "900", letterSpacing: -0.6, paddingHorizontal: 16 },
   count: { color: "#BC8CF2", paddingHorizontal: 16, marginTop: 4, fontWeight: "600" },
-  secHeader: { flexDirection: "row", alignItems: "center", gap: 8, paddingHorizontal: 16, marginTop: 18, marginBottom: 6 },
-  secTitle: { color: "#fff", fontSize: 18, fontWeight: "800" },
+  plHeader: { flexDirection: "row", alignItems: "center", paddingHorizontal: 16, marginTop: 20, marginBottom: 10 },
+  plTitleWrap: { flex: 1 },
   addBtn: { padding: 4 },
   createRow: { flexDirection: "row", gap: 8, paddingHorizontal: 16, marginBottom: 4 },
   input: { flex: 1, backgroundColor: "#1e1e1e", borderRadius: 10, padding: 12, color: "#fff", fontSize: 15 },
   createBtn: { backgroundColor: "#BC8CF2", borderRadius: 10, paddingHorizontal: 16, justifyContent: "center" },
   createText: { color: "#141414", fontWeight: "800" },
   plRow: { flexDirection: "row", alignItems: "center", paddingVertical: 8, paddingHorizontal: 16, gap: 12 },
-  plArt: { width: 52, height: 52, borderRadius: 6, backgroundColor: "#1e1e1e", alignItems: "center", justifyContent: "center" },
+  plArt: { width: 52, height: 52, borderRadius: 12, backgroundColor: "#1e1e1e", alignItems: "center", justifyContent: "center" },
   mid: { flex: 1 },
-  plName: { color: "#fff", fontSize: 15, fontWeight: "700" },
+  plName: { color: "#fff", fontSize: 15, fontWeight: "700", letterSpacing: -0.2 },
   plSub: { color: "#888", fontSize: 13, marginTop: 2 },
   empty: { color: "#777", paddingHorizontal: 16, marginTop: 8, lineHeight: 20 },
 });

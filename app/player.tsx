@@ -7,6 +7,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { usePlayer } from "../lib/player";
 import { formatTime } from "../lib/music";
 import { AddToPlaylistModal } from "../components/AddToPlaylistModal";
+import { C } from "../lib/theme";
 
 export default function PlayerScreen() {
   const insets = useSafeAreaInsets();
@@ -41,8 +42,8 @@ export default function PlayerScreen() {
           <Text numberOfLines={2} style={s.title}>{current.name}</Text>
           <Text numberOfLines={1} style={s.artist}>{current.artists}</Text>
         </View>
-        <Pressable onPress={() => toggleLike(current)} hitSlop={10}>
-          <Ionicons name={liked ? "heart" : "heart-outline"} size={28} color={liked ? "#BC8CF2" : "#fff"} />
+        <Pressable onPress={() => toggleLike(current)} hitSlop={10} style={({ pressed }) => pressed && { opacity: 0.55 }}>
+          <Ionicons name={liked ? "heart" : "heart-outline"} size={28} color={liked ? C.like : "#fff"} />
         </Pressable>
         <Pressable onPress={() => setPlOpen(true)} hitSlop={10}>
           <Ionicons name="list-outline" size={28} color="#fff" />
@@ -68,17 +69,17 @@ export default function PlayerScreen() {
       </View>
 
       <View style={s.controls}>
-        <Pressable onPress={prev} hitSlop={14}>
+        <Pressable onPress={prev} hitSlop={14} style={({ pressed }) => pressed && { opacity: 0.55, transform: [{ scale: 0.92 }] }}>
           <Ionicons name="play-skip-back" size={40} color="#fff" />
         </Pressable>
-        <Pressable onPress={toggle} style={s.playBtn} hitSlop={10}>
+        <Pressable onPress={toggle} style={({ pressed }) => [s.playBtn, pressed && { opacity: 0.8, transform: [{ scale: 0.94 }] }]} hitSlop={10}>
           {loading ? (
             <ActivityIndicator color="#000" size="large" />
           ) : (
             <Ionicons name={isPlaying ? "pause" : "play"} size={42} color="#000" />
           )}
         </Pressable>
-        <Pressable onPress={next} hitSlop={14}>
+        <Pressable onPress={next} hitSlop={14} style={({ pressed }) => pressed && { opacity: 0.55, transform: [{ scale: 0.92 }] }}>
           <Ionicons name="play-skip-forward" size={40} color="#fff" />
         </Pressable>
       </View>

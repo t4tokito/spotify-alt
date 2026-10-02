@@ -3,6 +3,7 @@ import { Image, Pressable, StyleSheet, Text, View } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import type { Song } from "../lib/music";
 import { usePlayer } from "../lib/player";
+import { C, tint } from "../lib/theme";
 import { AddToPlaylistModal } from "./AddToPlaylistModal";
 
 export function SongRow({
@@ -23,7 +24,10 @@ export function SongRow({
 
   return (
     <>
-      <Pressable onPress={() => play(song, queue)} style={[s.row, active && s.active]}>
+      <Pressable
+        onPress={() => play(song, queue)}
+        style={({ pressed }) => [s.row, active && s.active, pressed && { opacity: 0.6 }]}
+      >
         <Image source={{ uri: song.imageSmall || song.image }} style={s.art} />
         <View style={s.mid}>
           <Text numberOfLines={1} style={[s.title, active && s.activeText]}>
@@ -34,19 +38,19 @@ export function SongRow({
           </Text>
         </View>
         {active && isPlaying ? (
-          <Ionicons name="stats-chart" size={18} color="#BC8CF2" />
+          <Ionicons name="stats-chart" size={18} color={C.accent} />
         ) : null}
         {onRemove ? (
           <Pressable onPress={onRemove} hitSlop={10} style={s.icon}>
-            <Ionicons name="remove-circle-outline" size={20} color="#888" />
+            <Ionicons name="remove-circle-outline" size={20} color={C.neutral} />
           </Pressable>
         ) : (
           <>
             <Pressable onPress={() => toggleLike(song)} hitSlop={10} style={s.icon}>
-              <Ionicons name={liked ? "heart" : "heart-outline"} size={20} color={liked ? "#BC8CF2" : "#888"} />
+              <Ionicons name={liked ? "heart" : "heart-outline"} size={20} color={liked ? C.like : C.neutral} />
             </Pressable>
             <Pressable onPress={() => setPlOpen(true)} hitSlop={10} style={s.icon}>
-              <Ionicons name="list-outline" size={20} color="#888" />
+              <Ionicons name="list-outline" size={20} color={C.neutral} />
             </Pressable>
           </>
         )}
@@ -58,11 +62,11 @@ export function SongRow({
 
 const s = StyleSheet.create({
   row: { flexDirection: "row", alignItems: "center", paddingVertical: 8, paddingHorizontal: 16, gap: 10 },
-  active: { backgroundColor: "rgba(188,140,242,0.08)" },
-  art: { width: 52, height: 52, borderRadius: 6, backgroundColor: "#222" },
+  active: { backgroundColor: tint(C.accent, 0.09) },
+  art: { width: 52, height: 52, borderRadius: 11, backgroundColor: C.surface },
   mid: { flex: 1 },
-  title: { color: "#fff", fontSize: 15, fontWeight: "600" },
-  activeText: { color: "#BC8CF2" },
-  sub: { color: "#999", fontSize: 13, marginTop: 2 },
+  title: { color: C.text, fontSize: 15, fontWeight: "600", letterSpacing: -0.2 },
+  activeText: { color: C.accent },
+  sub: { color: C.textDim, fontSize: 13, marginTop: 2 },
   icon: { padding: 6 },
 });

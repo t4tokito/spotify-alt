@@ -6,11 +6,13 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { HOME_SECTIONS, Song, getInstagramTrending, searchSongs } from "../lib/music";
 import { usePlayer } from "../lib/player";
 import { SongRow } from "../components/SongRow";
+import { SectionTitle } from "../components/SectionTitle";
+import { C } from "../lib/theme";
 
 export default function Home() {
   const insets = useSafeAreaInsets();
   const { play, history } = usePlayer();
-  const [sections, setSections] = useState<{ title: string; songs: Song[]; icon?: string }[]>([]);
+  const [sections, setSections] = useState<{ title: string; songs: Song[]; icon?: string; color?: string }[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
 
@@ -24,7 +26,7 @@ export default function Home() {
         })),
       ]);
       const all = [
-        { title: "Instagram Trending", icon: "flame", songs: insta.slice(0, 12) },
+        { title: "Instagram Trending", icon: "flame", color: C.trending, songs: insta.slice(0, 12) },
         ...rest,
       ];
       setSections(all.filter((r) => r.songs.length > 0));
@@ -60,7 +62,7 @@ export default function Home() {
 
       {history.length > 0 && (
         <>
-          <Text style={s.secTitle}>Recently Played</Text>
+          <SectionTitle title="Recently Played" icon="time-outline" color={C.neutral} />
           <FlatList
             horizontal
             data={history.slice(0, 10)}
@@ -81,10 +83,7 @@ export default function Home() {
       {sections.map((sec) => (
         <View key={sec.title}>
           {sec.icon ? (
-            <View style={s.secHeader}>
-              <Ionicons name={sec.icon as any} size={20} color="#BC8CF2" />
-              <Text style={s.secTitlePlain}>{sec.title}</Text>
-            </View>
+            <SectionTitle title={sec.title} icon={sec.icon} color={sec.color ?? C.accent} />
           ) : (
             <Text style={s.secTitle}>{sec.title}</Text>
           )}
@@ -120,13 +119,11 @@ const s = StyleSheet.create({
   hero: { padding: 20, paddingTop: 26 },
   greet: { color: "#ccc", fontSize: 14 },
   greetRow: { flexDirection: "row", alignItems: "center", gap: 6 },
-  brand: { color: "#fff", fontSize: 34, fontWeight: "900", marginTop: 4 },
+  brand: { color: "#fff", fontSize: 34, fontWeight: "900", marginTop: 4, letterSpacing: -0.8 },
   tag: { color: "#BC8CF2", fontWeight: "700", marginTop: 6 },
-  secTitle: { color: "#fff", fontSize: 20, fontWeight: "800", paddingHorizontal: 16, marginTop: 22, marginBottom: 12 },
-  secHeader: { flexDirection: "row", alignItems: "center", gap: 8, paddingHorizontal: 16, marginTop: 22, marginBottom: 12 },
-  secTitlePlain: { color: "#fff", fontSize: 20, fontWeight: "800" },
+  secTitle: { color: "#fff", fontSize: 20, fontWeight: "800", letterSpacing: -0.4, paddingHorizontal: 16, marginTop: 22, marginBottom: 12 },
   card: { width: 140 },
-  cardArt: { width: 140, height: 140, borderRadius: 8, backgroundColor: "#222" },
-  cardTitle: { color: "#fff", fontWeight: "700", marginTop: 6, fontSize: 13 },
+  cardArt: { width: 140, height: 140, borderRadius: 14, backgroundColor: "#222" },
+  cardTitle: { color: "#fff", fontWeight: "700", marginTop: 6, fontSize: 13, letterSpacing: -0.2 },
   cardSub: { color: "#888", fontSize: 12 },
 });
