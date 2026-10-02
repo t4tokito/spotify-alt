@@ -17,7 +17,7 @@ export default function Home() {
     try {
       const [insta, ...rest] = await Promise.all([
         getInstagramTrending(12),
-        ...HOME_SECTIONS.slice(0, 3).map(async (sec) => ({
+        ...HOME_SECTIONS.map(async (sec) => ({
           title: sec.title,
           songs: (await searchSongs(sec.query, 10)).slice(0, 10),
         })),
