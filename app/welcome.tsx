@@ -1,6 +1,6 @@
 import { View } from "react-native";
 import { useRouter } from "expo-router";
-import { AuthBg, AuthBrand, AuthButton, AuthLink, AuthSecondaryButton } from "../components/AuthUI";
+import { AuthBg, AuthBrand, AuthButton, AuthSecondaryButton } from "../components/AuthUI";
 
 export default function Welcome() {
   const router = useRouter();
@@ -10,7 +10,6 @@ export default function Welcome() {
         <AuthBrand />
       </View>
       <AuthButton title="SIGN UP" onPress={() => router.push("/signup")} />
-      <AuthLink label="Create a new account" onPress={() => router.push("/signup")} />
       <AuthSecondaryButton title="LOG IN" onPress={() => router.push("/login")} />
     </AuthBg>
   );
