@@ -4,6 +4,9 @@ import { Ionicons } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 export const ACCENT = "#BC8CF2";
+// Auth screens follow the reference look: Spotify-style green pops on photos,
+// while lavender stays dim on dark imagery.
+const AUTH_GREEN = "#1DB954";
 const ON_ACCENT = "#141414";
 const BG = require("../assets/login.jpeg");
 
@@ -126,7 +129,7 @@ const s = StyleSheet.create({
   brandRow: { flexDirection: "row", alignItems: "center", gap: 10 },
   disc: {
     width: 52, height: 52, borderRadius: 26,
-    backgroundColor: ACCENT, alignItems: "center", justifyContent: "center",
+    backgroundColor: AUTH_GREEN, alignItems: "center", justifyContent: "center",
   },
   brandName: { color: "#fff", fontSize: 68, fontWeight: "900", lineHeight: 72, marginTop: 14 },
   tagline: { color: "rgba(255,255,255,0.75)", fontSize: 13, marginTop: 8 },
@@ -139,7 +142,7 @@ const s = StyleSheet.create({
     fontSize: 16,
     color: "#fff",
   },
-  btn: { backgroundColor: ACCENT, borderRadius: 28, paddingVertical: 16, alignItems: "center", marginTop: 6 },
+  btn: { backgroundColor: AUTH_GREEN, borderRadius: 28, paddingVertical: 16, alignItems: "center", marginTop: 6 },
   btnDark: { backgroundColor: "rgba(20,20,20,0.85)", borderRadius: 28, paddingVertical: 16, alignItems: "center" },
   btnBusy: { opacity: 0.7 },
   btnText: { color: ON_ACCENT, fontWeight: "800", fontSize: 15, letterSpacing: 1 },

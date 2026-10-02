@@ -20,7 +20,7 @@ export default function Welcome() {
           {FEATS.map((f) => (
             <View key={f.label} style={s.feat}>
               <View style={s.featIcon}>
-                <Ionicons name={f.icon as any} size={18} color="#BC8CF2" />
+                <Ionicons name={f.icon as any} size={18} color="#1DB954" />
               </View>
               <Text style={s.featText}>{f.label}</Text>
             </View>
@@ -42,7 +42,7 @@ const s = StyleSheet.create({
   feat: { alignItems: "center", gap: 6 },
   featIcon: {
     width: 46, height: 46, borderRadius: 23,
-    backgroundColor: "rgba(188,140,242,0.16)",
+    backgroundColor: "rgba(29,185,84,0.16)",
     alignItems: "center", justifyContent: "center",
   },
   featText: { color: "rgba(255,255,255,0.8)", fontSize: 11, fontWeight: "700" },
