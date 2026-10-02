@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { ActivityIndicator, Image, Pressable, StyleSheet, Text, View } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
@@ -9,7 +10,8 @@ import { formatTime } from "../lib/music";
 export default function PlayerScreen() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
-  const { current, isPlaying, toggle, next, prev, position, duration, seek, toggleLike, isLiked, loading } = usePlayer();
+  const { current, isPlaying, toggle, next, prev, position, duration, seek, toggleLike, isLiked, loading, volume, setVolume } = usePlayer();
+  const [barW, setBarW] = useState(0);
 
   if (!current) {
     return (
@@ -24,6 +26,7 @@ export default function PlayerScreen() {
 
   const liked = isLiked(current.id);
   const progress = duration > 0 ? position / duration : 0;
+  const kbps = current.url.match(/_(\d+)\.mp4/)?.[1];
 
   return (
     <LinearGradient colors={["#BC8CF244", "#121212"]} style={[s.root, { paddingTop: insets.top }]}>
@@ -75,7 +78,22 @@ export default function PlayerScreen() {
         </Pressable>
       </View>
 
-      <Text style={s.free}>Tokito Music • Free Forever • No Ads • {current.language} • {current.year}</Text>
+      <View style={s.volRow}>
+        <Ionicons name="volume-low-outline" size={20} color="#888" />
+        <Pressable
+          style={s.volBar}
+          onLayout={(e) => setBarW(e.nativeEvent.layout.width)}
+          onPress={(e) => {
+            if (barW > 0) setVolume(e.nativeEvent.locationX / barW);
+          }}
+        >
+          <View style={[s.volFill, { width: `${Math.round(volume * 100)}%` }]} />
+        </Pressable>
+        <Ionicons name="volume-high-outline" size={20} color="#888" />
+        <Text style={s.volPct}>{Math.round(volume * 100)}%</Text>
+      </View>
+
+      <Text style={s.free}>Tokito Music • Free Forever • No Ads{kbps ? ` • ${kbps}kbps` : ""} • {current.language} • {current.year}</Text>
       <View style={{ height: insets.bottom + 10 }} />
     </LinearGradient>
   );
@@ -98,6 +116,10 @@ const s = StyleSheet.create({
   skipText: { color: "#BC8CF2", fontWeight: "700" },
   controls: { flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 36, marginTop: 22 },
   playBtn: { backgroundColor: "#fff", width: 76, height: 76, borderRadius: 38, alignItems: "center", justifyContent: "center" },
+  volRow: { flexDirection: "row", alignItems: "center", gap: 10, marginTop: 22 },
+  volBar: { flex: 1, height: 5, backgroundColor: "#333", borderRadius: 3, overflow: "hidden" },
+  volFill: { height: 5, backgroundColor: "#BC8CF2" },
+  volPct: { color: "#888", fontSize: 12, width: 38, textAlign: "right" },
   free: { color: "#666", textAlign: "center", marginTop: 26, fontSize: 12 },
   backBtn: { marginTop: 16, backgroundColor: "#BC8CF2", paddingHorizontal: 24, paddingVertical: 10, borderRadius: 20 },
 });

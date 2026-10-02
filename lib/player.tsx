@@ -19,6 +19,8 @@ type PlayerContextType = {
   next: () => void;
   prev: () => void;
   seek: (sec: number) => void;
+  volume: number;
+  setVolume: (v: number) => void;
 };
 
 const Ctx = createContext<PlayerContextType | null>(null);
@@ -33,6 +35,8 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
   const [queue, setQueue] = useState<Song[]>([]);
   const [liked, setLiked] = useState<Record<string, Song>>({});
   const [history, setHistory] = useState<Song[]>([]);
+  const [volume, setVolumeState] = useState(1);
+  const volumeRef = useRef(1);
   const queueRef = useRef<Song[]>([]);
   const currentRef = useRef<Song | null>(null);
   const statusRef = useRef(status);
@@ -59,6 +63,19 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
     AsyncStorage.setItem(HISTORY_KEY, JSON.stringify(history.slice(0, 50))).catch(() => {});
   }, [history]);
 
+  // always push volume to the native player (never leave it quiet)
+  useEffect(() => {
+    try {
+      player.volume = volume;
+    } catch {}
+  }, [player, volume]);
+
+  const setVolume = useCallback((v: number) => {
+    const clamped = Math.min(1, Math.max(0, v));
+    volumeRef.current = clamped;
+    setVolumeState(clamped);
+  }, []);
+
   const play = useCallback(
     (song: Song, q?: Song[]) => {
       const list = q ?? [song];
@@ -68,6 +85,7 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
       setCurrent(song);
       try {
         player.replace({ uri: song.url });
+        player.volume = volumeRef.current;
         player.play();
       } catch {}
       setHistory((h) => [song, ...h.filter((x) => x.id !== song.id)].slice(0, 50));
@@ -96,6 +114,7 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
       setCurrent(nxt);
       try {
         player.replace({ uri: nxt.url });
+        player.volume = volumeRef.current;
         player.play();
       } catch {}
       setHistory((h) => [nxt, ...h.filter((x) => x.id !== nxt.id)].slice(0, 50));
@@ -165,8 +184,10 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
       next,
       prev,
       seek,
+      volume,
+      setVolume,
     }),
-    [current, queue, status, liked, history, play, toggle, next, prev, seek, toggleLike, isLiked]
+    [current, queue, status, liked, history, play, toggle, next, prev, seek, volume, setVolume, toggleLike, isLiked]
   );
 
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;
