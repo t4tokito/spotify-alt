@@ -14,7 +14,7 @@ export function AuthBg({ children, center }: { children: React.ReactNode; center
     <ImageBackground source={BG} style={s.bg} resizeMode="cover">
       <View style={s.overlay} />
       <LinearGradient
-        colors={["rgba(0,0,0,0.25)", "rgba(0,0,0,0.55)", "rgba(0,0,0,0.88)"]}
+        colors={["rgba(0,0,0,0.12)", "rgba(0,0,0,0.32)", "rgba(0,0,0,0.78)"]}
         style={s.gradient}
       />
       <View style={[s.content, center && s.centered, { paddingTop: insets.top + 16, paddingBottom: insets.bottom + 28 }]}>
@@ -119,7 +119,7 @@ export function AuthLink({ label, onPress }: { label: string; onPress: () => voi
 
 const s = StyleSheet.create({
   bg: { flex: 1 },
-  overlay: { ...StyleSheet.absoluteFill, backgroundColor: "rgba(0,0,0,0.45)" },
+  overlay: { ...StyleSheet.absoluteFill, backgroundColor: "rgba(0,0,0,0.22)" },
   gradient: { ...StyleSheet.absoluteFill },
   content: { flex: 1, paddingHorizontal: 24, gap: 12, justifyContent: "flex-end" },
   centered: { justifyContent: "center" },
