@@ -127,7 +127,7 @@ const s = StyleSheet.create({
     width: 52, height: 52, borderRadius: 26,
     backgroundColor: ACCENT, alignItems: "center", justifyContent: "center",
   },
-  brandName: { color: "#fff", fontSize: 52, fontWeight: "900", lineHeight: 56, marginTop: 14 },
+  brandName: { color: "#fff", fontSize: 68, fontWeight: "900", lineHeight: 72, marginTop: 14 },
   tagline: { color: "rgba(255,255,255,0.75)", fontSize: 13, marginTop: 8 },
   heading: { color: "#fff", fontSize: 30, fontWeight: "900", letterSpacing: 1 },
   headingSub: { color: "rgba(255,255,255,0.7)", fontSize: 13, marginTop: 4 },
