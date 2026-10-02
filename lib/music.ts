@@ -155,10 +155,9 @@ export async function getInstagramTrending(limit = 20): Promise<Song[]> {
 }
 
 export const HOME_SECTIONS: { title: string; query: string }[] = [
-  { title: "Arijit Singh Essentials", query: "arijit singh" },
-  { title: "90s Evergreen", query: "90s hindi evergreen" },
   { title: "English Top Hits", query: "english top hits" },
   { title: "Phonk", query: "phonk" },
+  { title: "90s Evergreen", query: "90s hindi evergreen" },
   { title: "Punjabi Party", query: "punjabi hits diljit" },
 ];
 
