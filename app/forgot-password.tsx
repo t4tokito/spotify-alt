@@ -26,10 +26,8 @@ export default function ForgotPassword() {
   }
 
   return (
-    <AuthBg>
-      <View style={{ flex: 1, paddingTop: 40 }}>
-        <AuthHeading title="RESET PASSWORD" sub="Enter your email, we'll send a reset link." />
-      </View>
+    <AuthBg center>
+      <AuthHeading title="RESET PASSWORD" sub="Enter your email, we'll send a reset link." />
       {done ? (
         <Text style={s.ok}>Link sent. Check your inbox (and spam folder), then log in.</Text>
       ) : (

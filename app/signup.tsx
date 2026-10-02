@@ -51,10 +51,8 @@ export default function Signup() {
   }
 
   return (
-    <AuthBg>
-      <View style={{ flex: 1, paddingTop: 40 }}>
-        <AuthHeading title="SIGN UP" sub="Never Lost. Discover New Music." />
-      </View>
+    <AuthBg center>
+      <AuthHeading title="SIGN UP" sub="Never Lost. Discover New Music." />
       <AuthInput value={username} onChangeText={setUsername} placeholder="Username (5-15 characters)" />
       <AuthHint msg={nameStatus} ok={nameStatus.includes("available")} />
       <AuthInput value={email} onChangeText={setEmail} placeholder="Email address" keyboardType="email-address" />

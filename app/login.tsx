@@ -28,10 +28,8 @@ export default function Login() {
   }
 
   return (
-    <AuthBg>
-      <View style={{ flex: 1, paddingTop: 40 }}>
-        <AuthHeading title="LOG IN" sub="Never Lost. Discover New Music." />
-      </View>
+    <AuthBg center>
+      <AuthHeading title="LOG IN" sub="Never Lost. Discover New Music." />
       {!FIREBASE_CONFIGURED && (
         <Text style={s.warn}>Firebase keys are missing — add EXPO_PUBLIC_FIREBASE_* to .env and restart the app.</Text>
       )}
