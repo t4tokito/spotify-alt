@@ -1,6 +1,8 @@
-import React, { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
+import React, { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import type { Song } from "./music";
+import { useAuth } from "./auth";
+import { deleteCloudPlaylist, loadCloudPlaylists, saveCloudPlaylist } from "./cloud";
 
 export type Playlist = {
   id: string;
@@ -26,8 +28,17 @@ function newId(): string {
   return `pl_${Date.now().toString(36)}_${Math.floor(Math.random() * 1e6).toString(36)}`;
 }
 
+function mergeSongs(a: Song[], b: Song[]): Song[] {
+  const seen = new Set(a.map((s) => s.id));
+  return [...a, ...b.filter((s) => !seen.has(s.id))];
+}
+
 export function PlaylistProvider({ children }: { children: React.ReactNode }) {
+  const { user } = useAuth();
+  const uid = user?.uid ?? null;
   const [playlists, setPlaylists] = useState<Playlist[]>([]);
+  const cloudReady = useRef(false);
+  const wasLoggedIn = useRef(false);
 
   useEffect(() => {
     (async () => {
@@ -38,9 +49,49 @@ export function PlaylistProvider({ children }: { children: React.ReactNode }) {
     })();
   }, []);
 
+  // login -> merge cloud in; logout -> wipe (data lives in the account now)
+  useEffect(() => {
+    if (!uid) {
+      cloudReady.current = false;
+      if (wasLoggedIn.current) {
+        wasLoggedIn.current = false;
+        setPlaylists([]);
+        AsyncStorage.removeItem(KEY).catch(() => {});
+      }
+      return;
+    }
+    wasLoggedIn.current = true;
+    let cancelled = false;
+    (async () => {
+      try {
+        const cloud = await loadCloudPlaylists(uid);
+        if (cancelled) return;
+        if (cloud.length > 0) {
+          setPlaylists((prev) => {
+          const map = new Map(prev.map((p) => [p.id, p] as const));
+          for (const cp of cloud) {
+            const ex = map.get(cp.id);
+            map.set(cp.id, ex ? { ...ex, songs: mergeSongs(ex.songs, cp.songs) } : cp);
+          }
+          return [...map.values()].sort((a, b) => b.createdAt - a.createdAt);
+          });
+        }
+      } catch {}
+      if (!cancelled) cloudReady.current = true;
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [uid]);
+
   useEffect(() => {
     AsyncStorage.setItem(KEY, JSON.stringify(playlists)).catch(() => {});
-  }, [playlists]);
+    if (!uid || !cloudReady.current) return;
+    const t = setTimeout(() => {
+      Promise.all(playlists.map((p) => saveCloudPlaylist(uid, p))).catch(() => {});
+    }, 2000);
+    return () => clearTimeout(t);
+  }, [playlists, uid]);
 
   const createPlaylist = useCallback((name: string): Playlist => {
     const pl: Playlist = { id: newId(), name: name.trim().slice(0, 40) || "My Playlist", createdAt: Date.now(), songs: [] };
@@ -48,9 +99,13 @@ export function PlaylistProvider({ children }: { children: React.ReactNode }) {
     return pl;
   }, []);
 
-  const deletePlaylist = useCallback((id: string) => {
-    setPlaylists((p) => p.filter((x) => x.id !== id));
-  }, []);
+  const deletePlaylist = useCallback(
+    (id: string) => {
+      setPlaylists((p) => p.filter((x) => x.id !== id));
+      if (uid) deleteCloudPlaylist(uid, id).catch(() => {});
+    },
+    [uid]
+  );
 
   const renamePlaylist = useCallback((id: string, name: string) => {
     const n = name.trim().slice(0, 40);

@@ -2,6 +2,8 @@ import React, { createContext, useCallback, useContext, useEffect, useMemo, useR
 import { useAudioPlayer, useAudioPlayerStatus } from "expo-audio";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import type { Song } from "./music";
+import { useAuth } from "./auth";
+import { likeCloud, loadCloudHistory, loadCloudLiked, saveCloudHistory, unlikeCloud } from "./cloud";
 
 type PlayerContextType = {
   current: Song | null;
@@ -31,6 +33,8 @@ const HISTORY_KEY = "@tokito-music:history";
 export function PlayerProvider({ children }: { children: React.ReactNode }) {
   const player = useAudioPlayer(null);
   const status = useAudioPlayerStatus(player);
+  const { user } = useAuth();
+  const uid = user?.uid ?? null;
   const [current, setCurrent] = useState<Song | null>(null);
   const [queue, setQueue] = useState<Song[]>([]);
   const [liked, setLiked] = useState<Record<string, Song>>({});
@@ -41,6 +45,8 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
   const currentRef = useRef<Song | null>(null);
   const statusRef = useRef(status);
   statusRef.current = status;
+  const cloudReady = useRef(false);
+  const wasLoggedIn = useRef(false);
 
   useEffect(() => {
     (async () => {
@@ -55,13 +61,49 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
     })();
   }, []);
 
+  // login -> merge cloud data in; logout -> wipe (data lives in the account now)
+  useEffect(() => {
+    if (!uid) {
+      cloudReady.current = false;
+      if (wasLoggedIn.current) {
+        wasLoggedIn.current = false;
+        setLiked({});
+        setHistory([]);
+        AsyncStorage.multiRemove([LIKED_KEY, HISTORY_KEY]).catch(() => {});
+      }
+      return;
+    }
+    wasLoggedIn.current = true;
+    let cancelled = false;
+    (async () => {
+      try {
+        const [cLiked, cHist] = await Promise.all([loadCloudLiked(uid), loadCloudHistory(uid)]);
+        if (cancelled) return;
+        setLiked((prev) => ({ ...cLiked, ...prev }));
+        setHistory((prev) => {
+          const seen = new Set(prev.map((s) => s.id));
+          return [...prev, ...cHist.filter((s) => !seen.has(s.id))].slice(0, 50);
+        });
+      } catch {}
+      if (!cancelled) cloudReady.current = true;
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [uid]);
+
   useEffect(() => {
     AsyncStorage.setItem(LIKED_KEY, JSON.stringify(liked)).catch(() => {});
   }, [liked]);
 
   useEffect(() => {
     AsyncStorage.setItem(HISTORY_KEY, JSON.stringify(history.slice(0, 50))).catch(() => {});
-  }, [history]);
+    if (!uid || !cloudReady.current) return;
+    const t = setTimeout(() => {
+      saveCloudHistory(uid, history.slice(0, 50)).catch(() => {});
+    }, 4000);
+    return () => clearTimeout(t);
+  }, [history, uid]);
 
   // always push volume to the native player (never leave it quiet)
   useEffect(() => {
@@ -157,13 +199,17 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
   );
 
   const toggleLike = useCallback((s: Song) => {
+    const liking = !liked[s.id];
     setLiked((m) => {
       const c = { ...m };
       if (c[s.id]) delete c[s.id];
       else c[s.id] = s;
       return c;
     });
-  }, []);
+    if (uid) {
+      (liking ? likeCloud(uid, s) : unlikeCloud(uid, s.id)).catch(() => {});
+    }
+  }, [liked, uid]);
 
   const isLiked = useCallback((id: string) => !!liked[id], [liked]);
 
