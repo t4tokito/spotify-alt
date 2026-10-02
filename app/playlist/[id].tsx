@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { FlatList, Pressable, StyleSheet, Text, View } from "react-native";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -5,6 +6,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { usePlayer } from "../../lib/player";
 import { usePlaylists } from "../../lib/playlists";
 import { SongRow } from "../../components/SongRow";
+import { AddSongsModal } from "../../components/AddSongsModal";
 
 export default function PlaylistDetail() {
   const insets = useSafeAreaInsets();
@@ -12,6 +14,7 @@ export default function PlaylistDetail() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const { play } = usePlayer();
   const { playlists, deletePlaylist, removeFromPlaylist } = usePlaylists();
+  const [addOpen, setAddOpen] = useState(false);
   const pl = playlists.find((p) => p.id === id);
 
   if (!pl) {
@@ -40,6 +43,10 @@ export default function PlaylistDetail() {
           <Ionicons name="play" size={20} color="#141414" />
           <Text style={s.playAllText}>Play All</Text>
         </Pressable>
+        <Pressable onPress={() => setAddOpen(true)} style={s.add}>
+          <Ionicons name="add" size={20} color="#141414" />
+          <Text style={s.playAllText}>Add</Text>
+        </Pressable>
         <Pressable
           onPress={() => {
             deletePlaylist(pl.id);
@@ -59,6 +66,7 @@ export default function PlaylistDetail() {
         )}
         ListEmptyComponent={<Text style={s.empty}>Empty — add songs from Search.</Text>}
       />
+      <AddSongsModal visible={addOpen} playlistId={pl.id} playlistName={pl.name} onClose={() => setAddOpen(false)} />
     </View>
   );
 }
@@ -78,6 +86,10 @@ const s = StyleSheet.create({
     backgroundColor: "#BC8CF2", borderRadius: 20, paddingHorizontal: 20, paddingVertical: 10,
   },
   disabled: { opacity: 0.4 },
+  add: {
+    flexDirection: "row", alignItems: "center", gap: 6,
+    backgroundColor: "#BC8CF2", borderRadius: 20, paddingHorizontal: 20, paddingVertical: 10,
+  },
   playAllText: { color: "#141414", fontWeight: "800" },
   delete: {
     flexDirection: "row", alignItems: "center", gap: 6,
