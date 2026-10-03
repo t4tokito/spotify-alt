@@ -366,18 +366,24 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
     return () => clearInterval(t);
   }, [player, clearSleep]);
 
-  const startRadio = useCallback(
-    async (song: Song) => {
-      try {
-        const sug = await getSuggestions(song.id, 20);
-        const list = [song, ...sug.filter((s) => s.id !== song.id)];
-        play(song, list);
-      } catch {
-        play(song, [song]);
-      }
-    },
-    [play]
-  );
+  const startRadio = useCallback(async (song: Song) => {
+    try {
+      const sug = await getSuggestions(song.id, 20);
+      const fresh = sug.filter((s) => s.id !== song.id);
+      if (fresh.length === 0) return;
+      // queue similar songs right after this one — never interrupt playback
+      const mergeAfter = (list: Song[]) => {
+        const i = list.findIndex((s) => s.id === song.id);
+        const newOnes = fresh.filter((f) => !list.some((o) => o.id === f.id));
+        if (i === -1) return [...list, ...newOnes];
+        return [...list.slice(0, i + 1), ...newOnes, ...list.slice(i + 1)];
+      };
+      queueRef.current = mergeAfter(queueRef.current);
+      setQueue([...queueRef.current]);
+      orderRef.current = mergeAfter(orderRef.current);
+      setOrder([...orderRef.current]);
+    } catch {}
+  }, []);
 
   const next = useCallback(() => {
     stepRef.current?.(1);
