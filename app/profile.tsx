@@ -8,10 +8,8 @@ import { authErrorMessage, useAuth } from "../lib/auth";
 import { usePlayer } from "../lib/player";
 import { usePlaylists } from "../lib/playlists";
 import { SongRow } from "../components/SongRow";
-import { PLAYLIST_ICONS } from "../lib/playlistIcons";
 import type { Playlist } from "../lib/playlists";
 import { AVATARS, AVATAR_KEYS } from "../lib/avatars";
-import { PLAYLIST_ICONS } from "../lib/playlistIcons";
 import { getFollowers, getFollowing } from "../lib/cloud";
 import { C, tint } from "../lib/theme";
 
