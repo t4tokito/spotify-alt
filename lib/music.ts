@@ -111,6 +111,54 @@ export async function searchAlbums(query: string, limit = 10): Promise<any[]> {
   return json?.data?.results ?? [];
 }
 
+export type LyricLine = { t: number; text: string };
+
+/** Parse LRC-style synced lines ([mm:ss.xx] text). Returns [] if plain text. */
+export function parseLRC(raw: string): LyricLine[] {
+  const out: LyricLine[] = [];
+  for (const line of raw.split("\n")) {
+    const m = line.match(/\[(\d{1,3}):(\d{2})(?:[.:](\d{1,3}))?\]\s*(.*)/);
+    if (!m) continue;
+    const min = parseInt(m[1], 10);
+    const sec = parseInt(m[2], 10);
+    const frac = m[3] ? parseInt(m[3].padEnd(3, "0").slice(0, 3), 10) / 1000 : 0;
+    const text = (m[4] ?? "").trim();
+    if (!text) continue;
+    out.push({ t: min * 60 + sec + frac, text });
+  }
+  return out.sort((a, b) => a.t - b.t);
+}
+
+const lyricsCache = new Map<string, LyricLine[] | null>();
+
+/** Fetch lyrics, trying known endpoint shapes across mirrors. Null = unavailable. */
+export async function getLyrics(songId: string): Promise<LyricLine[] | null> {
+  if (lyricsCache.has(songId)) return lyricsCache.get(songId) ?? null;
+  const paths = [
+    `/api/songs/${encodeURIComponent(songId)}/lyrics`,
+    `/api/lyrics/${encodeURIComponent(songId)}`,
+    `/api/lyrics?id=${encodeURIComponent(songId)}`,
+  ];
+  for (const base of MIRRORS) {
+    for (const path of paths) {
+      try {
+        const res = await fetch(`${base}${path}`);
+        if (!res.ok) continue;
+        const json = await res.json();
+        const raw: unknown = json?.data?.lyrics ?? json?.data ?? json?.lyrics;
+        if (typeof raw === "string" && raw.trim()) {
+          const synced = parseLRC(raw);
+          const lines = synced.length > 0 ? synced : raw.split("\n").map((text) => ({ t: -1, text: text.trim() })).filter((l) => l.text);
+          lyricsCache.set(songId, lines);
+          return lines;
+        }
+      } catch {}
+    }
+  }
+  lyricsCache.set(songId, null);
+  return null;
+}
+
 export type Playlist = { id: string; name: string; songCount: number };
 
 export async function searchPlaylists(query: string, limit = 5): Promise<Playlist[]> {

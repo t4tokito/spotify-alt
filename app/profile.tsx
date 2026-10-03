@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { ActivityIndicator, Image, Modal, Pressable, StyleSheet, Text, TextInput, View } from "react-native";
+import { useRouter } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { authErrorMessage, useAuth } from "../lib/auth";
@@ -9,6 +10,7 @@ import { C } from "../lib/theme";
 
 export default function Profile() {
   const insets = useSafeAreaInsets();
+  const router = useRouter();
   const { profile, user, signOut, updateUsername, updatePhoto } = useAuth();
   const { liked, history } = usePlayer();
   const likedCount = Object.keys(liked).length;
@@ -119,6 +121,12 @@ export default function Profile() {
           <Text style={s.statLabel}>Played</Text>
         </View>
       </View>
+      <Pressable onPress={() => router.push("/stats" as any)} style={({ pressed }) => [s.statsBtn, pressed && { opacity: 0.7 }]}>
+        <Ionicons name="stats-chart-outline" size={20} color={C.accent} />
+        <Text style={s.statsBtnText}>Your Stats</Text>
+        <View style={{ flex: 1 }} />
+        <Ionicons name="chevron-forward" size={20} color={C.neutral} />
+      </Pressable>
       <Pressable onPress={signOut} style={({ pressed }) => [s.outBtn, pressed && { opacity: 0.75 }]}>
         <Ionicons name="log-out-outline" size={20} color={C.onAccent} />
         <Text style={s.outText}>Log Out</Text>
@@ -188,6 +196,11 @@ const s = StyleSheet.create({
   stat: { flex: 1, backgroundColor: C.surface, borderRadius: 18, padding: 16, alignItems: "center", gap: 4 },
   statNum: { color: C.text, fontSize: 20, fontWeight: "800" },
   statLabel: { color: C.textDim, fontSize: 12 },
+  statsBtn: {
+    flexDirection: "row", alignItems: "center", gap: 10,
+    backgroundColor: C.surface, borderRadius: 18, padding: 16, marginTop: 12,
+  },
+  statsBtnText: { color: C.text, fontSize: 16, fontWeight: "700" },
   outBtn: {
     flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 8,
     backgroundColor: C.accent, borderRadius: 24, paddingVertical: 14, marginTop: 20,

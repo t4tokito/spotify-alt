@@ -7,14 +7,20 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { usePlayer } from "../lib/player";
 import { formatTime } from "../lib/music";
 import { AddToPlaylistModal } from "../components/AddToPlaylistModal";
+import { LyricsModal } from "../components/LyricsModal";
+import { QueueModal } from "../components/QueueModal";
+import { SleepModal } from "../components/SleepModal";
 import { C } from "../lib/theme";
 
 export default function PlayerScreen() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
-  const { current, isPlaying, toggle, next, prev, position, duration, seek, toggleLike, isLiked, loading, volume, setVolume } = usePlayer();
+  const { current, isPlaying, toggle, next, prev, position, duration, seek, toggleLike, isLiked, loading, volume, setVolume, shuffle, toggleShuffle, repeat, cycleRepeat, sleepLeft, startRadio } = usePlayer();
   const [barW, setBarW] = useState(0);
   const [plOpen, setPlOpen] = useState(false);
+  const [queueOpen, setQueueOpen] = useState(false);
+  const [lyricsOpen, setLyricsOpen] = useState(false);
+  const [sleepOpen, setSleepOpen] = useState(false);
 
   if (!current) {
     return (
@@ -33,9 +39,25 @@ export default function PlayerScreen() {
 
   return (
     <LinearGradient colors={["#BC8CF244", "#121212"]} style={[s.root, { paddingTop: insets.top }]}>
-      <Pressable onPress={() => router.back()} style={s.down} hitSlop={12}>
-        <Ionicons name="chevron-down" size={30} color="#fff" />
-      </Pressable>
+      <View style={s.topRow}>
+        <Pressable onPress={() => router.back()} style={s.down} hitSlop={12}>
+          <Ionicons name="chevron-down" size={30} color="#fff" />
+        </Pressable>
+        <View style={s.topRight}>
+          <Pressable onPress={() => setQueueOpen(true)} hitSlop={12} style={s.qBtn}>
+            <Ionicons name="list" size={24} color="#fff" />
+          </Pressable>
+          <Pressable onPress={() => setLyricsOpen(true)} hitSlop={12} style={s.qBtn}>
+            <Ionicons name="mic-outline" size={24} color="#fff" />
+          </Pressable>
+          <Pressable onPress={() => setSleepOpen(true)} hitSlop={12} style={s.qBtn}>
+            <View>
+              <Ionicons name="moon-outline" size={24} color={sleepLeft !== null ? C.accent : "#fff"} />
+              {sleepLeft !== null && <View style={s.dot} />}
+            </View>
+          </Pressable>
+        </View>
+      </View>
       <Image source={{ uri: current.image }} style={s.art} />
       <View style={s.infoRow}>
         <View style={{ flex: 1 }}>
@@ -47,6 +69,9 @@ export default function PlayerScreen() {
         </Pressable>
         <Pressable onPress={() => setPlOpen(true)} hitSlop={10}>
           <Ionicons name="list-outline" size={28} color="#fff" />
+        </Pressable>
+        <Pressable onPress={() => startRadio(current)} hitSlop={10}>
+          <Ionicons name="radio-outline" size={28} color="#fff" />
         </Pressable>
       </View>
 
@@ -69,6 +94,9 @@ export default function PlayerScreen() {
       </View>
 
       <View style={s.controls}>
+        <Pressable onPress={toggleShuffle} hitSlop={14} style={({ pressed }) => pressed && { opacity: 0.55 }}>
+          <Ionicons name="shuffle" size={24} color={shuffle ? C.accent : "#888"} />
+        </Pressable>
         <Pressable onPress={prev} hitSlop={14} style={({ pressed }) => pressed && { opacity: 0.55, transform: [{ scale: 0.92 }] }}>
           <Ionicons name="play-skip-back" size={40} color="#fff" />
         </Pressable>
@@ -81,6 +109,14 @@ export default function PlayerScreen() {
         </Pressable>
         <Pressable onPress={next} hitSlop={14} style={({ pressed }) => pressed && { opacity: 0.55, transform: [{ scale: 0.92 }] }}>
           <Ionicons name="play-skip-forward" size={40} color="#fff" />
+        </Pressable>
+        <Pressable onPress={cycleRepeat} hitSlop={14} style={({ pressed }) => [s.repeatWrap, pressed && { opacity: 0.55 }]}>
+          <Ionicons
+            name="repeat"
+            size={24}
+            color={repeat === "off" ? "#888" : C.accent}
+          />
+          {repeat === "one" && <Text style={s.oneBadge}>1</Text>}
         </Pressable>
       </View>
 
@@ -102,13 +138,23 @@ export default function PlayerScreen() {
       <Text style={s.free}>Tokito Music • Free Forever • No Ads{kbps ? ` • ${kbps}kbps` : ""} • {current.language} • {current.year}</Text>
       <View style={{ height: insets.bottom + 10 }} />
       <AddToPlaylistModal visible={plOpen} song={current} onClose={() => setPlOpen(false)} />
+      <QueueModal visible={queueOpen} onClose={() => setQueueOpen(false)} />
+      <LyricsModal visible={lyricsOpen} song={current} onClose={() => setLyricsOpen(false)} />
+      <SleepModal visible={sleepOpen} onClose={() => setSleepOpen(false)} />
     </LinearGradient>
   );
 }
 
 const s = StyleSheet.create({
   root: { flex: 1, paddingHorizontal: 24 },
-  down: { alignSelf: "flex-start", padding: 4 },
+  topRow: { flexDirection: "row", alignItems: "center", justifyContent: "space-between" },
+  topRight: { flexDirection: "row", alignItems: "center", gap: 6 },
+  down: { padding: 4 },
+  qBtn: { padding: 4 },
+  dot: {
+    position: "absolute", top: -2, right: -2, width: 9, height: 9,
+    borderRadius: 5, backgroundColor: C.accent,
+  },
   art: { width: "100%", aspectRatio: 1, borderRadius: 12, marginTop: 18, backgroundColor: "#222" },
   infoRow: { flexDirection: "row", alignItems: "center", marginTop: 24, gap: 12 },
   title: { color: "#fff", fontSize: 22, fontWeight: "900" },
@@ -121,7 +167,13 @@ const s = StyleSheet.create({
   seekRow: { flexDirection: "row", justifyContent: "center", gap: 24, marginTop: 6 },
   skip: { padding: 6 },
   skipText: { color: "#BC8CF2", fontWeight: "700" },
-  controls: { flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 36, marginTop: 22 },
+  controls: { flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 28, marginTop: 22 },
+  repeatWrap: { position: "relative", padding: 4 },
+  oneBadge: {
+    position: "absolute", right: 0, bottom: 0,
+    color: C.accent, fontSize: 10, fontWeight: "900",
+    backgroundColor: "#121212", borderRadius: 6, paddingHorizontal: 2,
+  },
   playBtn: { backgroundColor: "#fff", width: 76, height: 76, borderRadius: 38, alignItems: "center", justifyContent: "center" },
   volRow: { flexDirection: "row", alignItems: "center", gap: 10, marginTop: 22 },
   volBar: { flex: 1, height: 5, backgroundColor: "#333", borderRadius: 3, overflow: "hidden" },

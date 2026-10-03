@@ -2,6 +2,7 @@ import { collection, deleteDoc, doc, getDoc, getDocs, query, setDoc, where } fro
 import { db } from "./firebase";
 import type { Song } from "./music";
 import type { Playlist } from "./playlists";
+import type { PlayStat } from "./player";
 
 /** Firestore drops fields with `undefined` — strip them before writing. */
 function clean<T>(v: T): T {
@@ -46,6 +47,21 @@ export async function loadCloudHistory(uid: string): Promise<Song[]> {
 export async function saveCloudHistory(uid: string, songs: Song[]): Promise<void> {
   if (noDb()) return;
   await setDoc(doc(db, "users", uid), { history: clean(songs.slice(0, 50)) }, { merge: true });
+}
+
+// ---------- play stats (map field on users/{uid}) ----------
+
+export async function loadCloudStats(uid: string): Promise<Record<string, PlayStat>> {
+  if (noDb()) return {};
+  const snap = await getDoc(doc(db, "users", uid));
+  const st = snap.data()?.playStats;
+  return st && typeof st === "object" ? (st as Record<string, PlayStat>) : {};
+}
+
+export async function saveCloudStats(uid: string, stats: Record<string, PlayStat>): Promise<void> {
+  if (noDb()) return;
+  const entries = Object.entries(stats).slice(0, 300);
+  await setDoc(doc(db, "users", uid), { playStats: clean(Object.fromEntries(entries)) }, { merge: true });
 }
 
 // ---------- playlists (one doc each: users/{uid}/playlists/{plId}) ----------
