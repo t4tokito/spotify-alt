@@ -11,6 +11,7 @@ import { useAuth } from "../../lib/auth";
 import { PLAYLIST_ICONS, PLAYLIST_ICON_KEYS } from "../../lib/playlistIcons";
 import { SongRow } from "../../components/SongRow";
 import { AddSongsModal } from "../../components/AddSongsModal";
+import { ImportPlaylistModal } from "../../components/ImportPlaylistModal";
 import { C, tint } from "../../lib/theme";
 
 function totalMins(songs: { duration: number }[]): string {
@@ -52,6 +53,7 @@ export default function PlaylistDetail() {
   const { playlists, deletePlaylist, removeFromPlaylist, setPlaylistIcon, setVisibility } = usePlaylists();
   const [addOpen, setAddOpen] = useState(false);
   const [iconOpen, setIconOpen] = useState(false);
+  const [saveOpen, setSaveOpen] = useState(false);
   const [remote, setRemote] = useState<Playlist | null>(null);
   const [remoteLoading, setRemoteLoading] = useState(false);
 
@@ -151,7 +153,7 @@ export default function PlaylistDetail() {
               >
                 <Ionicons name="play" size={30} color={C.onAccent} />
               </Pressable>
-              {isMine && (
+              {isMine ? (
                 <>
                   <Pressable
                     onPress={() => setAddOpen(true)}
@@ -172,6 +174,18 @@ export default function PlaylistDetail() {
                     <Ionicons name="trash-outline" size={24} color={C.neutral} />
                   </Pressable>
                 </>
+              ) : (
+                <>
+                  <Pressable
+                    onPress={() => setSaveOpen(true)}
+                    hitSlop={10}
+                    style={({ pressed }) => [s.saveBtn, pressed && { opacity: 0.8 }]}
+                  >
+                    <Ionicons name="download-outline" size={18} color={C.onAccent} />
+                    <Text style={s.saveText}>Save to Library</Text>
+                  </Pressable>
+                  <View style={{ flex: 1 }} />
+                </>
               )}
             </View>
           </View>
@@ -187,6 +201,9 @@ export default function PlaylistDetail() {
       />
       {isMine && (
         <AddSongsModal visible={addOpen} playlistId={pl.id} playlistName={pl.name} onClose={() => setAddOpen(false)} />
+      )}
+      {!isMine && (
+        <ImportPlaylistModal visible={saveOpen} songs={pl.songs} sourceName={pl.name} onClose={() => setSaveOpen(false)} />
       )}
 
       <Modal visible={iconOpen} transparent animationType="fade" onRequestClose={() => setIconOpen(false)}>
@@ -260,6 +277,11 @@ const s = StyleSheet.create({
   },
   disabled: { opacity: 0.35 },
   iconBtn: { padding: 10 },
+  saveBtn: {
+    flexDirection: "row", alignItems: "center", gap: 6,
+    backgroundColor: C.accent, borderRadius: 20, paddingHorizontal: 18, paddingVertical: 10,
+  },
+  saveText: { color: C.onAccent, fontWeight: "800", fontSize: 14 },
   muted: { color: C.textDim },
   backBtn: { backgroundColor: C.accent, paddingHorizontal: 24, paddingVertical: 10, borderRadius: 20 },
   backText: { color: C.onAccent, fontWeight: "800" },

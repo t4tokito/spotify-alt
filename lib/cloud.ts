@@ -1,4 +1,4 @@
-import { collection, deleteDoc, doc, getDoc, getDocs, query, setDoc, where } from "firebase/firestore";
+import { collection, deleteDoc, doc, getDoc, getDocs, query, setDoc, where, writeBatch } from "firebase/firestore";
 import { db } from "./firebase";
 import type { Song } from "./music";
 import type { Playlist } from "./playlists";
@@ -106,4 +106,74 @@ export async function loadPublicPlaylist(ownerUid: string, id: string): Promise<
   if (!snap.exists()) return null;
   const pl = snap.data() as Playlist;
   return pl.visibility === "public" ? pl : null;
+}
+
+// ---------- follow (insta-style) ----------
+
+export type FollowDoc = { uid: string; username: string; photoURL?: string | null; at: number };
+
+export async function followUser(
+  meUid: string,
+  me: { username: string; photoURL?: string | null },
+  target: { uid: string; username: string; photoURL?: string | null }
+): Promise<void> {
+  if (noDb() || meUid === target.uid) return;
+  const batch = writeBatch(db);
+  batch.set(doc(db, "users", meUid, "following", target.uid), { ...target, at: Date.now() });
+  batch.set(doc(db, "users", target.uid, "followers", meUid), { uid: meUid, ...me, at: Date.now() });
+  await batch.commit();
+}
+
+export async function unfollowUser(meUid: string, targetUid: string): Promise<void> {
+  if (noDb()) return;
+  const batch = writeBatch(db);
+  batch.delete(doc(db, "users", meUid, "following", targetUid));
+  batch.delete(doc(db, "users", targetUid, "followers", meUid));
+  await batch.commit();
+}
+
+export async function isFollowing(meUid: string, targetUid: string): Promise<boolean> {
+  if (noDb()) return false;
+  const snap = await getDoc(doc(db, "users", meUid, "following", targetUid));
+  return snap.exists();
+}
+
+export async function getFollowing(uid: string): Promise<FollowDoc[]> {
+  if (noDb()) return [];
+  const snap = await getDocs(collection(db, "users", uid, "following"));
+  const out: FollowDoc[] = [];
+  snap.forEach((d) => out.push(d.data() as FollowDoc));
+  return out;
+}
+
+export async function getFollowers(uid: string): Promise<FollowDoc[]> {
+  if (noDb()) return [];
+  const snap = await getDocs(collection(db, "users", uid, "followers"));
+  const out: FollowDoc[] = [];
+  snap.forEach((d) => out.push(d.data() as FollowDoc));
+  return out;
+}
+
+/** Random songs from public playlists of people you follow (explore feed). */
+export async function getFollowExplore(uid: string, limit = 10): Promise<Song[]> {
+  if (noDb()) return [];
+  const following = await getFollowing(uid);
+  if (following.length === 0) return [];
+  const picks = [...following].sort(() => Math.random() - 0.5).slice(0, 5);
+  const batches = await Promise.all(
+    picks.map((f) => loadUserPublicPlaylists(f.uid).catch(() => [] as Playlist[]))
+  );
+  const seen = new Set<string>();
+  const songs: Song[] = [];
+  for (const pls of batches) {
+    for (const p of pls) {
+      for (const s of p.songs) {
+        if (!seen.has(s.id)) {
+          seen.add(s.id);
+          songs.push(s);
+        }
+      }
+    }
+  }
+  return songs.sort(() => Math.random() - 0.5).slice(0, limit);
 }

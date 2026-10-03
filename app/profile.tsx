@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { ActivityIndicator, Image, Modal, Pressable, StyleSheet, Text, TextInput, View } from "react-native";
 import { useRouter } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -6,6 +6,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { authErrorMessage, useAuth } from "../lib/auth";
 import { usePlayer } from "../lib/player";
 import { AVATARS, AVATAR_KEYS } from "../lib/avatars";
+import { getFollowers, getFollowing } from "../lib/cloud";
 import { C } from "../lib/theme";
 
 export default function Profile() {
@@ -18,9 +19,31 @@ export default function Profile() {
   const initial = (name.trim()[0] ?? "M").toUpperCase();
   const avatarSrc = profile?.photoURL ? AVATARS[profile.photoURL] : null;
 
+  const [followersCount, setFollowersCount] = useState(0);
+  const [followingCount, setFollowingCount] = useState(0);
+
+  useEffect(() => {
+    if (!user?.uid) return;
+    let live = true;
+    (async () => {
+      try {
+        const [fwers, fwing] = await Promise.all([
+          getFollowers(user.uid).catch(() => []),
+          getFollowing(user.uid).catch(() => []),
+        ]);
+        if (live) {
+          setFollowersCount(fwers.length);
+          setFollowingCount(fwing.length);
+        }
+      } catch {}
+    })();
+    return () => {
+      live = false;
+    };
+  }, [user?.uid]);
+
   const [avatarOpen, setAvatarOpen] = useState(false);
-  const [editing, setEditing] = useState(false);
-  const [newName, setNewName] = useState("");
+  const [editing, setEditing] = useState(false);  const [newName, setNewName] = useState("");
   const [nameError, setNameError] = useState("");
   const [busy, setBusy] = useState(false);
 
@@ -107,6 +130,15 @@ export default function Profile() {
         )}
         {!!nameError && <Text style={s.error}>{nameError}</Text>}
         <Text style={s.email}>{profile?.email ?? user?.email ?? ""}</Text>
+        <View style={s.counts}>
+          <Pressable onPress={() => router.push(`/follows?type=followers&uid=${user?.uid}` as any)}>
+            <Text style={s.countText}><Text style={s.countNum}>{followersCount}</Text> followers</Text>
+          </Pressable>
+          <Text style={s.dot}>•</Text>
+          <Pressable onPress={() => router.push(`/follows?type=following&uid=${user?.uid}` as any)}>
+            <Text style={s.countText}><Text style={s.countNum}>{followingCount}</Text> following</Text>
+          </Pressable>
+        </View>
       </View>
 
       <View style={s.stats}>
@@ -192,6 +224,10 @@ const s = StyleSheet.create({
   cancelBtn: { padding: 8 },
   error: { color: C.danger, fontSize: 13, marginTop: 8 },
   email: { color: C.textDim, marginTop: 6 },
+  counts: { flexDirection: "row", alignItems: "center", gap: 8, marginTop: 10 },
+  countText: { color: C.textDim, fontSize: 14 },
+  countNum: { color: C.text, fontWeight: "800" },
+  dot: { color: C.neutral },
   stats: { flexDirection: "row", gap: 12, marginTop: 12 },
   stat: { flex: 1, backgroundColor: C.surface, borderRadius: 18, padding: 16, alignItems: "center", gap: 4 },
   statNum: { color: C.text, fontSize: 20, fontWeight: "800" },

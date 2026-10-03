@@ -1,12 +1,16 @@
-import { useState } from "react";
+import { useCallback, useState } from "react";
 import { ActivityIndicator, FlatList, Image, Pressable, StyleSheet, Text, TextInput, View } from "react-native";
-import { useRouter } from "expo-router";
+import { useFocusEffect, useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Song, searchSongs } from "../lib/music";
 import { FoundUser, searchUsernames } from "../lib/usernames";
 import { AVATARS } from "../lib/avatars";
 import { SongRow } from "../components/SongRow";
+import { SectionTitle } from "../components/SectionTitle";
+import { useAuth } from "../lib/auth";
+import { getFollowExplore } from "../lib/cloud";
+import { usePlayer } from "../lib/player";
 import { C, tint } from "../lib/theme";
 
 const QUICK = ["Arijit Singh", "Diljit Dosanjh", "AP Dhillon", "Shreya Ghoshal", "Honey Singh", "Lata Mangeshkar", "KR$NA", "Taylor Swift"];
@@ -21,6 +25,25 @@ export default function Search() {
   const [results, setResults] = useState<Song[]>([]);
   const [people, setPeople] = useState<FoundUser[]>([]);
   const [loading, setLoading] = useState(false);
+  const [explore, setExplore] = useState<Song[]>([]);
+  const { user } = useAuth();
+  const { play } = usePlayer();
+
+  useFocusEffect(
+    useCallback(() => {
+      if (!user?.uid) {
+        setExplore([]);
+        return;
+      }
+      let live = true;
+      getFollowExplore(user.uid, 10)
+        .then((ss) => live && setExplore(ss))
+        .catch(() => {});
+      return () => {
+        live = false;
+      };
+    }, [user?.uid])
+  );
 
   async function doSearch(query: string, t: Tab = tab) {
     setQ(query);
@@ -75,6 +98,25 @@ export default function Search() {
         autoCorrect={false}
         autoCapitalize="none"
       />
+      {tab === "songs" && !q && explore.length > 0 && (
+        <View>
+          <SectionTitle title="From people you follow" icon="people-outline" color={C.accent} size={17} />
+          <FlatList
+            horizontal
+            data={explore}
+            keyExtractor={(i) => "ex-" + i.id}
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={{ paddingHorizontal: 16, gap: 12 }}
+            renderItem={({ item }) => (
+              <Pressable onPress={() => play(item, explore)} style={s.card}>
+                <Image source={{ uri: item.image }} style={s.cardArt} />
+                <Text numberOfLines={1} style={s.cardTitle}>{item.name}</Text>
+                <Text numberOfLines={1} style={s.cardSub}>{item.artists}</Text>
+              </Pressable>
+            )}
+          />
+        </View>
+      )}
       {tab === "songs" && !q && (
         <View style={s.chips}>
           {QUICK.map((c) => (
@@ -141,6 +183,10 @@ const s = StyleSheet.create({
   input: { backgroundColor: "#fff", marginHorizontal: 16, borderRadius: 8, padding: 12, fontSize: 16, color: "#000" },
   chips: { flexDirection: "row", flexWrap: "wrap", gap: 8, padding: 16 },
   chip: { backgroundColor: C.surface2, color: C.text, paddingHorizontal: 14, paddingVertical: 8, borderRadius: 20, overflow: "hidden" },
+  card: { width: 130 },
+  cardArt: { width: 130, height: 130, borderRadius: 14, backgroundColor: C.surface2 },
+  cardTitle: { color: C.text, fontWeight: "700", marginTop: 6, fontSize: 13, letterSpacing: -0.2 },
+  cardSub: { color: C.textDim, fontSize: 12 },
   emptyRow: { flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 8, marginTop: 30 },
   emptyText: { color: C.textFaint },
   emptySolo: { color: C.textFaint, textAlign: "center", marginTop: 30 },

@@ -88,6 +88,7 @@ export default function RootLayout() {
                 <Stack.Screen name="playlists" />
                 <Stack.Screen name="liked" />
                 <Stack.Screen name="stats" />
+                <Stack.Screen name="follows" />
                 <Stack.Screen name="user/[username]" />
               </Stack>
             </Shell>
