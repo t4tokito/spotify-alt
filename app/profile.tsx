@@ -175,6 +175,7 @@ export default function Profile() {
             </View>
             {tab === "playlists" && (
               <View>
+                <Text style={s.debug}>DEBUG rows={gridRows.length} total={playlists.length} w={Math.round(winW)}</Text>
                 {gridRows.map((row, ri) => (
                   <View key={`row-${ri}`} style={s.gridRow}>
                     {row.map((pl: any) => (
@@ -283,6 +284,7 @@ const s = StyleSheet.create({
   tab: { flex: 1, alignItems: "center", paddingVertical: 10, borderBottomWidth: 1, borderBottomColor: "transparent" },
   tabOn: { borderBottomColor: C.text },
   gridRow: { flexDirection: "row" },
+  debug: { color: "#FF5C7A", textAlign: "center", padding: 8 },
   cell: { width: "33.333%", aspectRatio: 1, padding: 1 },
   cellImg: { flex: 1, borderRadius: 4, backgroundColor: C.surface },
   cellEmpty: { alignItems: "center", justifyContent: "center" },
