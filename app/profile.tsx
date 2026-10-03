@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { ActivityIndicator, Dimensions, FlatList, Image, Modal, Pressable, StyleSheet, Text, TextInput, View } from "react-native";
+import { ActivityIndicator, FlatList, Image, Modal, Pressable, StyleSheet, Text, TextInput, View } from "react-native";
 import { useRouter } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
@@ -14,8 +14,6 @@ import { getFollowers, getFollowing } from "../lib/cloud";
 import { C, tint } from "../lib/theme";
 
 type Tab = "playlists" | "liked" | "history";
-
-const CELL = (Dimensions.get("window").width - 8) / 3;
 
 export default function Profile() {
   const insets = useSafeAreaInsets();
@@ -273,8 +271,8 @@ const s = StyleSheet.create({
   tabs: { flexDirection: "row", marginTop: 12, borderTopWidth: 1, borderTopColor: "rgba(255,255,255,0.08)" },
   tab: { flex: 1, alignItems: "center", paddingVertical: 10, borderBottomWidth: 1, borderBottomColor: "transparent" },
   tabOn: { borderBottomColor: C.text },
-  gridRow: { flexDirection: "row", paddingHorizontal: 2, gap: 2 },
-  cell: { width: CELL, height: CELL, padding: 1 },
+  gridRow: { flexDirection: "row" },
+  cell: { width: "33.333%", aspectRatio: 1, padding: 1 },
   cellImg: { flex: 1, borderRadius: 4, backgroundColor: C.surface },
   cellEmpty: { alignItems: "center", justifyContent: "center" },
   empty: { color: C.textFaint, textAlign: "center", marginTop: 30 },
