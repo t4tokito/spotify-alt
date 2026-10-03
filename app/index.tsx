@@ -1,13 +1,23 @@
-import { useEffect, useState } from "react";
+import { useCallback, useState } from "react";
 import { ActivityIndicator, FlatList, Image, Pressable, RefreshControl, ScrollView, StyleSheet, Text, View } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import { Ionicons } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { HOME_SECTIONS, Song, getInstagramTrending, searchSongs } from "../lib/music";
 import { usePlayer } from "../lib/player";
+import { useFocusEffect } from "expo-router";
 import { SongRow } from "../components/SongRow";
 import { SectionTitle } from "../components/SectionTitle";
 import { C } from "../lib/theme";
+
+function shuffle<T>(arr: T[]): T[] {
+  const a = [...arr];
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
 
 export default function Home() {
   const insets = useSafeAreaInsets();
@@ -19,23 +29,36 @@ export default function Home() {
   async function load() {
     try {
       const [insta, ...rest] = await Promise.all([
-        getInstagramTrending(12),
+        getInstagramTrending(15).then((ss) => shuffle(ss).slice(0, 12)),
         ...HOME_SECTIONS.map(async (sec) => ({
           title: sec.title,
-          songs: (await searchSongs(sec.query, 10)).slice(0, 10),
+          songs: shuffle(await searchSongs(sec.query, 15)).slice(0, 10),
         })),
       ]);
-      const all = [
-        { title: "Instagram Trending", icon: "flame", color: C.trending, songs: insta.slice(0, 12) },
-        ...rest,
-      ];
+      // same song in two sections looks stale — keep first occurrence only
+      const seen = new Set<string>();
+      const all = [{ title: "Instagram Trending", icon: "flame", color: C.trending, songs: insta }, ...rest].map(
+        (sec) => ({
+          ...sec,
+          songs: sec.songs.filter((s) => {
+            if (seen.has(s.id)) return false;
+            seen.add(s.id);
+            return true;
+          }),
+        })
+      );
       setSections(all.filter((r) => r.songs.length > 0));
     } catch {}
     setLoading(false);
     setRefreshing(false);
   }
 
-  useEffect(() => { load(); }, []);
+  // refetch every time home regains focus — sections feel live, like a feed
+  useFocusEffect(
+    useCallback(() => {
+      load();
+    }, [])
+  );
 
   if (loading) {
     return (
