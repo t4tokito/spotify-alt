@@ -81,6 +81,7 @@ export default function Profile() {
     tab === "playlists" ? null : tab === "liked" ? likedList : history;
 
   // exact thirds of the content width (root has 16px side padding)
+  const { width: winW } = useWindowDimensions();
   const CELL = (winW - 32) / 3;
   const gridRows: (typeof playlists)[] = [];
   if (tab === "playlists") {
@@ -90,9 +91,8 @@ export default function Profile() {
     });
   }
 
-  const { width: winW } = useWindowDimensions();
   useEffect(() => {
-    console.log("[profile-grid] winW:", winW, "playlists:", playlists.length);
+    console.log("[profile-grid] winW:", winW, "playlists:", playlists.length, "cell:", Math.round((winW - 32) / 3));
   }, []);
 
   return (
