@@ -2,6 +2,7 @@ import { useEffect } from "react";
 import { Stack, usePathname, useRouter, useSegments } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import { ActivityIndicator, View } from "react-native";
+import * as Updates from "expo-updates";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import { AuthProvider, useAuth } from "../lib/auth";
@@ -52,6 +53,19 @@ function Shell({ children }: { children: React.ReactNode }) {
 }
 
 export default function RootLayout() {
+  // OTA updates: silently apply any published update on launch (release builds only)
+  useEffect(() => {
+    (async () => {
+      try {
+        if (__DEV__ || !Updates.isEnabled) return;
+        const check = await Updates.checkForUpdateAsync();
+        if (check.isAvailable) {
+          await Updates.fetchUpdateAsync();
+          await Updates.reloadAsync();
+        }
+      } catch {}
+    })();
+  }, []);
   return (
     <GestureHandlerRootView style={{ flex: 1, backgroundColor: "#121212" }}>
       <SafeAreaProvider>
