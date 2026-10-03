@@ -10,6 +10,9 @@ export type Playlist = {
   createdAt: number;
   songs: Song[];
   icon?: string | null;
+  visibility?: "public" | "private";
+  ownerUid?: string;
+  ownerName?: string;
 };
 
 type PlaylistContextType = {
@@ -18,6 +21,7 @@ type PlaylistContextType = {
   deletePlaylist: (id: string) => void;
   renamePlaylist: (id: string, name: string) => void;
   setPlaylistIcon: (id: string, icon: string) => void;
+  setVisibility: (id: string, v: "public" | "private") => void;
   addToPlaylist: (playlistId: string, song: Song) => void;
   removeFromPlaylist: (playlistId: string, songId: string) => void;
   isInPlaylist: (playlistId: string, songId: string) => boolean;
@@ -126,6 +130,10 @@ export function PlaylistProvider({ children }: { children: React.ReactNode }) {
     setPlaylists((p) => p.map((x) => (x.id === id ? { ...x, icon } : x)));
   }, []);
 
+  const setVisibility = useCallback((id: string, v: "public" | "private") => {
+    setPlaylists((p) => p.map((x) => (x.id === id ? { ...x, visibility: v } : x)));
+  }, []);
+
   const addToPlaylist = useCallback((playlistId: string, song: Song) => {
     setPlaylists((p) =>
       p.map((x) =>
@@ -151,8 +159,8 @@ export function PlaylistProvider({ children }: { children: React.ReactNode }) {
   );
 
   const value = useMemo(
-    () => ({ playlists, createPlaylist, deletePlaylist, renamePlaylist, setPlaylistIcon, addToPlaylist, removeFromPlaylist, isInPlaylist }),
-    [playlists, createPlaylist, deletePlaylist, renamePlaylist, setPlaylistIcon, addToPlaylist, removeFromPlaylist, isInPlaylist]
+    () => ({ playlists, createPlaylist, deletePlaylist, renamePlaylist, setPlaylistIcon, setVisibility, addToPlaylist, removeFromPlaylist, isInPlaylist }),
+    [playlists, createPlaylist, deletePlaylist, renamePlaylist, setPlaylistIcon, setVisibility, addToPlaylist, removeFromPlaylist, isInPlaylist]
   );
 
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;

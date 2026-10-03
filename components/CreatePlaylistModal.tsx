@@ -14,15 +14,17 @@ export function CreatePlaylistModal({
   onClose: () => void;
 }) {
   const insets = useSafeAreaInsets();
-  const { createPlaylist, setPlaylistIcon } = usePlaylists();
+  const { createPlaylist, setPlaylistIcon, setVisibility } = usePlaylists();
   const [step, setStep] = useState<"name" | "icons">("name");
   const [name, setName] = useState("");
   const [icon, setIcon] = useState<string | null>(null);
+  const [vis, setVis] = useState<"public" | "private">("private");
 
   function reset() {
     setStep("name");
     setName("");
     setIcon(null);
+    setVis("private");
   }
 
   function close() {
@@ -34,6 +36,7 @@ export function CreatePlaylistModal({
     if (!name.trim()) return;
     const pl = createPlaylist(name);
     if (icon) setPlaylistIcon(pl.id, icon);
+    setVisibility(pl.id, vis);
     close();
   }
 
@@ -86,6 +89,24 @@ export function CreatePlaylistModal({
                 </Pressable>
               ))}
             </View>
+            <View style={s.visRow}>
+              {(["public", "private"] as const).map((v) => (
+                <Pressable
+                  key={v}
+                  onPress={() => setVis(v)}
+                  style={[s.vis, vis === v && s.visSel]}
+                >
+                  <Ionicons
+                    name={v === "public" ? "globe-outline" : "lock-closed-outline"}
+                    size={16}
+                    color={vis === v ? C.onAccent : C.textDim}
+                  />
+                  <Text style={[s.visText, vis === v && s.visTextSel]}>
+                    {v === "public" ? "Public" : "Private"}
+                  </Text>
+                </Pressable>
+              ))}
+            </View>
             <Pressable onPress={done} style={s.btn}>
               <Text style={s.btnText}>Create Playlist</Text>
             </Pressable>
@@ -118,4 +139,13 @@ const s = StyleSheet.create({
   pickSel: { borderColor: C.accent },
   pickImg: { width: 88, height: 88, borderRadius: 14, backgroundColor: C.surface2 },
   pickCheck: { position: "absolute", top: -8, right: -8, backgroundColor: "#1a1a1a", borderRadius: 12 },
+  visRow: { flexDirection: "row", gap: 10, justifyContent: "center" },
+  vis: {
+    flexDirection: "row", alignItems: "center", gap: 6,
+    borderWidth: 1, borderColor: "rgba(255,255,255,0.15)", borderRadius: 20,
+    paddingHorizontal: 18, paddingVertical: 10,
+  },
+  visSel: { backgroundColor: C.accent, borderColor: C.accent },
+  visText: { color: C.textDim, fontWeight: "700", fontSize: 14 },
+  visTextSel: { color: C.onAccent },
 });

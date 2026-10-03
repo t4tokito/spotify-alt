@@ -1,11 +1,13 @@
-import { useState } from "react";
-import { FlatList, Image, Modal, Pressable, StyleSheet, Text, View } from "react-native";
+import { useEffect, useState } from "react";
+import { ActivityIndicator, FlatList, Image, Modal, Pressable, StyleSheet, Text, View } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { usePlayer } from "../../lib/player";
-import { usePlaylists } from "../../lib/playlists";
+import { usePlaylists, type Playlist } from "../../lib/playlists";
+import { loadPublicPlaylist } from "../../lib/cloud";
+import { useAuth } from "../../lib/auth";
 import { PLAYLIST_ICONS, PLAYLIST_ICON_KEYS } from "../../lib/playlistIcons";
 import { SongRow } from "../../components/SongRow";
 import { AddSongsModal } from "../../components/AddSongsModal";
@@ -44,23 +46,51 @@ function Cover({ icon, songs }: { icon?: string | null; songs: { image: string; 
 export default function PlaylistDetail() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
-  const { id } = useLocalSearchParams<{ id: string }>();
+  const { id, owner } = useLocalSearchParams<{ id: string; owner?: string }>();
   const { play } = usePlayer();
-  const { playlists, deletePlaylist, removeFromPlaylist, setPlaylistIcon } = usePlaylists();
+  const { user } = useAuth();
+  const { playlists, deletePlaylist, removeFromPlaylist, setPlaylistIcon, setVisibility } = usePlaylists();
   const [addOpen, setAddOpen] = useState(false);
   const [iconOpen, setIconOpen] = useState(false);
-  const pl = playlists.find((p) => p.id === id);
+  const [remote, setRemote] = useState<Playlist | null>(null);
+  const [remoteLoading, setRemoteLoading] = useState(false);
+
+  const isMine = !owner || owner === user?.uid;
+  const mine = playlists.find((p) => p.id === id);
+
+  useEffect(() => {
+    if (isMine || !owner) return;
+    let live = true;
+    setRemoteLoading(true);
+    loadPublicPlaylist(owner, id)
+      .then((p) => live && setRemote(p))
+      .catch(() => live && setRemote(null))
+      .finally(() => live && setRemoteLoading(false));
+    return () => {
+      live = false;
+    };
+  }, [isMine, owner, id]);
+
+  const pl = isMine ? mine : remote;
 
   if (!pl) {
     return (
       <View style={[s.center, { paddingTop: insets.top }]}>
-        <Text style={s.muted}>Playlist not found.</Text>
-        <Pressable onPress={() => router.back()} style={s.backBtn}>
-          <Text style={s.backText}>Back</Text>
-        </Pressable>
+        {remoteLoading ? (
+          <ActivityIndicator color={C.accent} size="large" />
+        ) : (
+          <>
+            <Text style={s.muted}>Playlist not found.</Text>
+            <Pressable onPress={() => router.back()} style={s.backBtn}>
+              <Text style={s.backText}>Back</Text>
+            </Pressable>
+          </>
+        )}
       </View>
     );
   }
+
+  const vis = pl.visibility ?? "private";
 
   return (
     <View style={[s.root, { paddingTop: insets.top }]}>
@@ -75,16 +105,40 @@ export default function PlaylistDetail() {
         keyExtractor={(i) => i.id}
         ListHeaderComponent={
           <View style={s.header}>
-            <Pressable onPress={() => setIconOpen(true)} style={s.coverWrap}>
+            <Pressable onPress={() => isMine && setIconOpen(true)} style={s.coverWrap}>
               <Cover icon={pl.icon} songs={pl.songs} />
-              <View style={s.editBadge}>
-                <Ionicons name="pencil" size={13} color={C.onAccent} />
-              </View>
+              {isMine && (
+                <View style={s.editBadge}>
+                  <Ionicons name="pencil" size={13} color={C.onAccent} />
+                </View>
+              )}
             </Pressable>
             <Text style={s.title}>{pl.name}</Text>
-            <Text style={s.meta}>
-              {pl.songs.length} songs • {totalMins(pl.songs)}
-            </Text>
+            <View style={s.metaRow}>
+              <Text style={s.meta}>
+                {pl.songs.length} songs • {totalMins(pl.songs)}
+              </Text>
+              {isMine ? (
+                <Pressable
+                  onPress={() => setVisibility(pl.id, vis === "public" ? "private" : "public")}
+                  style={[s.visPill, vis === "public" && s.visPillOn]}
+                >
+                  <Ionicons
+                    name={vis === "public" ? "globe-outline" : "lock-closed-outline"}
+                    size={13}
+                    color={vis === "public" ? C.onAccent : C.textDim}
+                  />
+                  <Text style={[s.visText, vis === "public" && s.visTextOn]}>
+                    {vis === "public" ? "Public" : "Private"}
+                  </Text>
+                </Pressable>
+              ) : (
+                <View style={[s.visPill, s.visPillOn]}>
+                  <Ionicons name="globe-outline" size={13} color={C.onAccent} />
+                  <Text style={[s.visText, s.visTextOn]}>Public</Text>
+                </View>
+              )}
+            </View>
             <View style={s.controls}>
               <Pressable
                 onPress={() => pl.songs.length > 0 && play(pl.songs[0], pl.songs)}
@@ -97,33 +151,43 @@ export default function PlaylistDetail() {
               >
                 <Ionicons name="play" size={30} color={C.onAccent} />
               </Pressable>
-              <Pressable
-                onPress={() => setAddOpen(true)}
-                hitSlop={10}
-                style={({ pressed }) => [s.iconBtn, pressed && { opacity: 0.55 }]}
-              >
-                <Ionicons name="add-circle-outline" size={28} color={C.textDim} />
-              </Pressable>
-              <View style={{ flex: 1 }} />
-              <Pressable
-                onPress={() => {
-                  deletePlaylist(pl.id);
-                  router.back();
-                }}
-                hitSlop={10}
-                style={({ pressed }) => [s.iconBtn, pressed && { opacity: 0.55 }]}
-              >
-                <Ionicons name="trash-outline" size={24} color={C.neutral} />
-              </Pressable>
+              {isMine && (
+                <>
+                  <Pressable
+                    onPress={() => setAddOpen(true)}
+                    hitSlop={10}
+                    style={({ pressed }) => [s.iconBtn, pressed && { opacity: 0.55 }]}
+                  >
+                    <Ionicons name="add-circle-outline" size={28} color={C.textDim} />
+                  </Pressable>
+                  <View style={{ flex: 1 }} />
+                  <Pressable
+                    onPress={() => {
+                      deletePlaylist(pl.id);
+                      router.back();
+                    }}
+                    hitSlop={10}
+                    style={({ pressed }) => [s.iconBtn, pressed && { opacity: 0.55 }]}
+                  >
+                    <Ionicons name="trash-outline" size={24} color={C.neutral} />
+                  </Pressable>
+                </>
+              )}
             </View>
           </View>
         }
         renderItem={({ item }) => (
-          <SongRow song={item} queue={pl.songs} onRemove={() => removeFromPlaylist(pl.id, item.id)} />
+          <SongRow
+            song={item}
+            queue={pl.songs}
+            onRemove={isMine ? () => removeFromPlaylist(pl.id, item.id) : undefined}
+          />
         )}
-        ListEmptyComponent={<Text style={s.empty}>Empty — tap + above to add songs.</Text>}
+        ListEmptyComponent={<Text style={s.empty}>Empty playlist.</Text>}
       />
-      <AddSongsModal visible={addOpen} playlistId={pl.id} playlistName={pl.name} onClose={() => setAddOpen(false)} />
+      {isMine && (
+        <AddSongsModal visible={addOpen} playlistId={pl.id} playlistName={pl.name} onClose={() => setAddOpen(false)} />
+      )}
 
       <Modal visible={iconOpen} transparent animationType="fade" onRequestClose={() => setIconOpen(false)}>
         <Pressable style={s.back2} onPress={() => setIconOpen(false)} />
@@ -179,7 +243,16 @@ const s = StyleSheet.create({
     color: C.text, fontSize: 30, fontWeight: "900", letterSpacing: -0.7,
     textAlign: "center", marginTop: 16,
   },
-  meta: { color: C.textDim, fontSize: 13, fontWeight: "600", marginTop: 6 },
+  metaRow: { flexDirection: "row", alignItems: "center", gap: 10, marginTop: 8 },
+  meta: { color: C.textDim, fontSize: 13, fontWeight: "600" },
+  visPill: {
+    flexDirection: "row", alignItems: "center", gap: 4,
+    borderWidth: 1, borderColor: "rgba(255,255,255,0.15)", borderRadius: 14,
+    paddingHorizontal: 10, paddingVertical: 4,
+  },
+  visPillOn: { backgroundColor: C.accent, borderColor: C.accent },
+  visText: { color: C.textDim, fontSize: 12, fontWeight: "700" },
+  visTextOn: { color: C.onAccent },
   controls: { flexDirection: "row", alignItems: "center", width: "100%", marginTop: 16, gap: 4 },
   playBtn: {
     width: 60, height: 60, borderRadius: 30,

@@ -1,9 +1,15 @@
 import {
+  collection,
   doc,
+  documentId,
   getDoc,
+  getDocs,
+  limit,
+  query,
   runTransaction,
   serverTimestamp,
   updateDoc,
+  where,
 } from "firebase/firestore";
 import { db } from "./firebase";
 
@@ -58,6 +64,34 @@ export async function resolveUsernameToEmail(
 export async function isUsernameAvailable(username: string): Promise<boolean> {
   const snap = await getDoc(doc(db, "usernames", key(username)));
   return !snap.exists();
+}
+
+export type FoundUser = { username: string; uid: string };
+
+/** Prefix-search usernames (doc ids are lowercased usernames). */
+export async function searchUsernames(q: string, max = 10): Promise<FoundUser[]> {
+  const prefix = q.trim().toLowerCase();
+  if (!prefix) return [];
+  const snap = await getDocs(
+    query(
+      collection(db, "usernames"),
+      where(documentId(), ">=", prefix),
+      where(documentId(), "<=", prefix + "\uf8ff"),
+      limit(max)
+    )
+  );
+  const out: FoundUser[] = [];
+  snap.forEach((d) => {
+    const data = d.data();
+    if (data.username && data.uid) out.push({ username: data.username as string, uid: data.uid as string });
+  });
+  return out;
+}
+
+/** uid behind a username (null if missing). */
+export async function resolveUsernameToUid(username: string): Promise<string | null> {
+  const snap = await getDoc(doc(db, "usernames", key(username)));
+  return snap.exists() ? ((snap.data().uid as string) ?? null) : null;
 }
 
 export type Profile = {

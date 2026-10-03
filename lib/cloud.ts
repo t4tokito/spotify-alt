@@ -1,4 +1,4 @@
-import { collection, deleteDoc, doc, getDoc, getDocs, setDoc } from "firebase/firestore";
+import { collection, deleteDoc, doc, getDoc, getDocs, query, setDoc, where } from "firebase/firestore";
 import { db } from "./firebase";
 import type { Song } from "./music";
 import type { Playlist } from "./playlists";
@@ -62,10 +62,32 @@ export async function loadCloudPlaylists(uid: string): Promise<Playlist[]> {
 
 export async function saveCloudPlaylist(uid: string, pl: Playlist): Promise<void> {
   if (noDb()) return;
-  await setDoc(doc(db, "users", uid, "playlists", pl.id), clean(pl));
+  await setDoc(doc(db, "users", uid, "playlists", pl.id), clean({ ...pl, ownerUid: uid }));
 }
 
 export async function deleteCloudPlaylist(uid: string, id: string): Promise<void> {
   if (noDb()) return;
   await deleteDoc(doc(db, "users", uid, "playlists", id));
+}
+
+/** Someone else's public playlists. */
+export async function loadUserPublicPlaylists(uid: string): Promise<Playlist[]> {
+  if (noDb()) return [];
+  const snap = await getDocs(
+    query(collection(db, "users", uid, "playlists"), where("visibility", "==", "public"))
+  );
+  const out: Playlist[] = [];
+  snap.forEach((d) => {
+    out.push(d.data() as Playlist);
+  });
+  return out.sort((a, b) => (b.createdAt ?? 0) - (a.createdAt ?? 0));
+}
+
+/** Single public playlist doc (for opening someone's playlist). */
+export async function loadPublicPlaylist(ownerUid: string, id: string): Promise<Playlist | null> {
+  if (noDb()) return null;
+  const snap = await getDoc(doc(db, "users", ownerUid, "playlists", id));
+  if (!snap.exists()) return null;
+  const pl = snap.data() as Playlist;
+  return pl.visibility === "public" ? pl : null;
 }

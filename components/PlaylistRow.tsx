@@ -5,11 +5,12 @@ import type { Playlist } from "../lib/playlists";
 import { PLAYLIST_ICONS } from "../lib/playlistIcons";
 import { C } from "../lib/theme";
 
-export function PlaylistRow({ pl }: { pl: Playlist }) {
+export function PlaylistRow({ pl, ownerUid }: { pl: Playlist; ownerUid?: string }) {
   const router = useRouter();
+  const href = ownerUid ? `/playlist/${pl.id}?owner=${ownerUid}` : `/playlist/${pl.id}`;
   return (
     <Pressable
-      onPress={() => router.push(`/playlist/${pl.id}` as any)}
+      onPress={() => router.push(href as any)}
       style={({ pressed }) => [s.row, pressed && { opacity: 0.6 }]}
     >
       <View style={s.art}>
