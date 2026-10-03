@@ -3,13 +3,13 @@ import { ActivityIndicator, FlatList, Image, Pressable, StyleSheet, Text, View }
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
+import { LinearGradient } from "expo-linear-gradient";
 import { getProfile, resolveUsernameToUid, type Profile } from "../../lib/usernames";
 import { followUser, getFollowers, getFollowing, isFollowing, loadUserPublicPlaylists, unfollowUser } from "../../lib/cloud";
 import { useAuth } from "../../lib/auth";
 import { AVATARS } from "../../lib/avatars";
 import type { Playlist } from "../../lib/playlists";
-import { PlaylistRow } from "../../components/PlaylistRow";
-import { SectionTitle } from "../../components/SectionTitle";
+import { SpotlightCard } from "../../components/SpotlightCard";
 import { C } from "../../lib/theme";
 
 export default function UserProfile() {
@@ -89,38 +89,56 @@ export default function UserProfile() {
 
   return (
     <View style={[s.root, { paddingTop: insets.top }]}>
-      <Pressable onPress={() => router.back()} hitSlop={12} style={s.back}>
-        <Ionicons name="arrow-back" size={24} color={C.text} />
-      </Pressable>
+      <View style={s.topBar}>
+        <Pressable onPress={() => router.back()} hitSlop={10} style={s.topBtn}>
+          <Ionicons name="arrow-back" size={24} color={C.text} />
+        </Pressable>
+        <Text style={s.topName}>{display}</Text>
+        <View style={s.topBtn} />
+      </View>
       {loading ? (
         <ActivityIndicator color={C.accent} size="large" style={{ marginTop: 40 }} />
       ) : missing || !uid ? (
         <Text style={s.empty}>User not found.</Text>
       ) : (
         <FlatList
-          data={playlists}
-          keyExtractor={(p) => p.id}
+          data={[]}
+          keyExtractor={() => "x"}
           ListHeaderComponent={
             <View>
-              <View style={s.card}>
-                {avatarSrc ? (
-                  <Image source={avatarSrc} style={s.avatarImg} />
-                ) : (
-                  <View style={s.avatar}>
-                    <Text style={s.avatarText}>{(display.trim()[0] ?? "?").toUpperCase()}</Text>
+              <View style={s.head}>
+                <LinearGradient
+                  colors={[C.accent, "#FF5C7A", "#FF9F43"]}
+                  start={{ x: 0, y: 0 }}
+                  end={{ x: 1, y: 1 }}
+                  style={s.ring}
+                >
+                  <View style={s.ringInner}>
+                    {avatarSrc ? (
+                      <Image source={avatarSrc} style={s.avatarImg} />
+                    ) : (
+                      <View style={s.avatar}>
+                        <Text style={s.avatarText}>{(display.trim()[0] ?? "?").toUpperCase()}</Text>
+                      </View>
+                    )}
                   </View>
-                )}
-                <Text style={s.name}>{display}</Text>
-                <View style={s.counts}>
-                  <Pressable onPress={() => router.push(`/follows?type=followers&uid=${uid}` as any)}>
-                    <Text style={s.countText}><Text style={s.countNum}>{followersCount}</Text> followers</Text>
-                  </Pressable>
-                  <Text style={s.dot}>•</Text>
-                  <Pressable onPress={() => router.push(`/follows?type=following&uid=${uid}` as any)}>
-                    <Text style={s.countText}><Text style={s.countNum}>{followingCount}</Text> following</Text>
-                  </Pressable>
+                </LinearGradient>
+                <View style={s.stat}>
+                  <Text style={s.statNum}>{playlists.length}</Text>
+                  <Text style={s.statLabel}>playlists</Text>
                 </View>
-                {!isSelf && (
+                <Pressable onPress={() => router.push(`/follows?type=followers&uid=${uid}` as any)} style={s.stat}>
+                  <Text style={s.statNum}>{followersCount}</Text>
+                  <Text style={s.statLabel}>followers</Text>
+                </Pressable>
+                <Pressable onPress={() => router.push(`/follows?type=following&uid=${uid}` as any)} style={s.stat}>
+                  <Text style={s.statNum}>{followingCount}</Text>
+                  <Text style={s.statLabel}>following</Text>
+                </Pressable>
+              </View>
+              <Text style={s.displayName}>{display}</Text>
+              {!isSelf && (
+                <View style={s.btnRow}>
                   <Pressable
                     onPress={toggleFollow}
                     disabled={followBusy}
@@ -130,13 +148,17 @@ export default function UserProfile() {
                       {following ? "Following" : "Follow"}
                     </Text>
                   </Pressable>
-                )}
+                </View>
+              )}
+              <View style={s.spotWrap}>
+                {playlists.map((pl) => (
+                  <SpotlightCard key={pl.id} pl={pl} ownerUid={uid} />
+                ))}
+                {playlists.length === 0 && <Text style={s.empty}>No public playlists yet.</Text>}
               </View>
-              <SectionTitle title="Public playlists" icon="globe-outline" color={C.accent} size={18} />
             </View>
           }
-          renderItem={({ item }) => <PlaylistRow pl={item} ownerUid={uid} />}
-          ListEmptyComponent={<Text style={s.empty}>No public playlists yet.</Text>}
+          renderItem={() => null}
         />
       )}
     </View>
@@ -145,26 +167,27 @@ export default function UserProfile() {
 
 const s = StyleSheet.create({
   root: { flex: 1, backgroundColor: C.bg },
-  back: { paddingHorizontal: 16, paddingVertical: 4, alignSelf: "flex-start" },
-  card: { alignItems: "center", paddingVertical: 12 },
+  topBar: { flexDirection: "row", alignItems: "center", paddingHorizontal: 16, paddingBottom: 6 },
+  topBtn: { padding: 6, width: 34 },
+  topName: { flex: 1, textAlign: "center", color: C.text, fontSize: 18, fontWeight: "800", letterSpacing: -0.3 },
+  head: { flexDirection: "row", alignItems: "center", paddingHorizontal: 16, paddingTop: 8, gap: 4 },
+  ring: { width: 92, height: 92, borderRadius: 46, alignItems: "center", justifyContent: "center" },
+  ringInner: { width: 84, height: 84, borderRadius: 42, backgroundColor: C.bg, alignItems: "center", justifyContent: "center" },
   avatar: {
-    width: 88, height: 88, borderRadius: 44,
+    width: 78, height: 78, borderRadius: 39,
     backgroundColor: C.accent, alignItems: "center", justifyContent: "center",
   },
-  avatarText: { color: C.onAccent, fontSize: 34, fontWeight: "900" },
-  avatarImg: { width: 88, height: 88, borderRadius: 44, backgroundColor: C.surface2 },
-  name: { color: C.text, fontSize: 24, fontWeight: "900", letterSpacing: -0.5, marginTop: 12 },
-  sub: { color: C.textDim, marginTop: 4 },
-  counts: { flexDirection: "row", alignItems: "center", gap: 8, marginTop: 8 },
-  countText: { color: C.textDim, fontSize: 14 },
-  countNum: { color: C.text, fontWeight: "800" },
-  dot: { color: C.neutral },
-  followBtn: {
-    backgroundColor: C.accent, borderRadius: 20,
-    paddingHorizontal: 32, paddingVertical: 10, marginTop: 14,
-  },
+  avatarText: { color: C.onAccent, fontSize: 30, fontWeight: "900" },
+  avatarImg: { width: 78, height: 78, borderRadius: 39, backgroundColor: C.surface2 },
+  stat: { flex: 1, alignItems: "center", gap: 2 },
+  statNum: { color: C.text, fontSize: 17, fontWeight: "800" },
+  statLabel: { color: C.textDim, fontSize: 12 },
+  displayName: { color: C.text, fontSize: 15, fontWeight: "800", paddingHorizontal: 16, marginTop: 10 },
+  btnRow: { paddingHorizontal: 16, marginTop: 12 },
+  followBtn: { backgroundColor: C.accent, borderRadius: 10, paddingVertical: 10, alignItems: "center" },
   followOff: { backgroundColor: "transparent", borderWidth: 1, borderColor: C.neutral },
-  followText: { color: C.onAccent, fontWeight: "800", fontSize: 15 },
+  followText: { color: C.onAccent, fontWeight: "800", fontSize: 14 },
   followTextOff: { color: C.text },
+  spotWrap: { paddingHorizontal: 16, gap: 12, paddingTop: 14 },
   empty: { color: C.textFaint, textAlign: "center", marginTop: 30 },
 });

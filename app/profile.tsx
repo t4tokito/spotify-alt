@@ -8,7 +8,7 @@ import { authErrorMessage, useAuth } from "../lib/auth";
 import { usePlayer } from "../lib/player";
 import { usePlaylists } from "../lib/playlists";
 import { SongRow } from "../components/SongRow";
-import { PLAYLIST_ICONS } from "../lib/playlistIcons";
+import { SpotlightCard } from "../components/SpotlightCard";
 import type { Playlist } from "../lib/playlists";
 import { AVATARS, AVATAR_KEYS } from "../lib/avatars";
 import { getFollowers, getFollowing } from "../lib/cloud";
@@ -20,7 +20,7 @@ export default function Profile() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
   const { profile, user, signOut, updateUsername, updatePhoto } = useAuth();
-  const { liked, history, play } = usePlayer();
+  const { liked, history } = usePlayer();
   const { playlists } = usePlaylists();
 
   const name = profile?.username ?? "Music Lover";
@@ -163,42 +163,7 @@ export default function Profile() {
             {tab === "playlists" && (
               <View style={s.spotWrap}>
                 {playlists.map((pl: Playlist) => (
-                  <Pressable
-                    key={pl.id}
-                    onPress={() => router.push(`/playlist/${pl.id}` as any)}
-                    style={({ pressed }) => [s.spot, pressed && { opacity: 0.75, transform: [{ scale: 0.98 }] }]}
-                  >
-                    {pl.icon && PLAYLIST_ICONS[pl.icon] ? (
-                      <Image source={PLAYLIST_ICONS[pl.icon]} resizeMode="cover" style={s.spotArt} />
-                    ) : pl.songs?.[0]?.image ? (
-                      <Image source={{ uri: pl.songs[0].image }} style={s.spotArt} />
-                    ) : (
-                      <View style={[s.spotArt, s.spotEmpty]}>
-                        <Ionicons name="musical-notes" size={30} color={C.accent} />
-                      </View>
-                    )}
-                    <View style={s.spotMid}>
-                      <Text numberOfLines={1} style={s.spotName}>{pl.name}</Text>
-                      <Text style={s.spotSub}>{pl.songs.length} songs</Text>
-                      <View style={[s.visPill, (pl.visibility ?? "private") === "public" && s.visOn]}>
-                        <Ionicons
-                          name={(pl.visibility ?? "private") === "public" ? "globe-outline" : "lock-closed-outline"}
-                          size={11}
-                          color={(pl.visibility ?? "private") === "public" ? C.onAccent : C.textDim}
-                        />
-                        <Text style={[s.visText, (pl.visibility ?? "private") === "public" && s.visTextOn]}>
-                          {(pl.visibility ?? "private") === "public" ? "Public" : "Private"}
-                        </Text>
-                      </View>
-                    </View>
-                    <Pressable
-                      onPress={() => pl.songs.length > 0 && play(pl.songs[0], pl.songs)}
-                      hitSlop={8}
-                      style={s.spotPlay}
-                    >
-                      <Ionicons name="play" size={20} color={C.onAccent} />
-                    </Pressable>
-                  </Pressable>
+                  <SpotlightCard key={pl.id} pl={pl} />
                 ))}
                 {playlists.length === 0 && <Text style={s.empty}>No playlists yet.</Text>}
               </View>
@@ -285,27 +250,6 @@ const s = StyleSheet.create({
   tabOn: { borderBottomColor: C.text },
   empty: { color: C.textFaint, textAlign: "center", marginTop: 30 },
   spotWrap: { paddingHorizontal: 16, gap: 12, paddingTop: 4 },
-  spot: {
-    flexDirection: "row", alignItems: "center", gap: 14,
-    backgroundColor: C.surface, borderRadius: 18, padding: 12,
-  },
-  spotArt: { width: 84, height: 84, borderRadius: 14, backgroundColor: C.surface2 },
-  spotEmpty: { alignItems: "center", justifyContent: "center" },
-  spotMid: { flex: 1, gap: 4 },
-  spotName: { color: C.text, fontSize: 17, fontWeight: "800", letterSpacing: -0.3 },
-  spotSub: { color: C.textDim, fontSize: 13, fontWeight: "600" },
-  visPill: {
-    flexDirection: "row", alignItems: "center", gap: 4, alignSelf: "flex-start",
-    borderWidth: 1, borderColor: "rgba(255,255,255,0.15)", borderRadius: 12,
-    paddingHorizontal: 8, paddingVertical: 3, marginTop: 2,
-  },
-  visOn: { backgroundColor: C.accent, borderColor: C.accent },
-  visText: { color: C.textDim, fontSize: 11, fontWeight: "700" },
-  visTextOn: { color: C.onAccent },
-  spotPlay: {
-    width: 44, height: 44, borderRadius: 22,
-    backgroundColor: C.accent, alignItems: "center", justifyContent: "center",
-  },
   back: { flex: 1, backgroundColor: "rgba(0,0,0,0.6)" },
   sheet: { backgroundColor: "#1a1a1a", borderTopLeftRadius: 20, borderTopRightRadius: 20, padding: 20, gap: 12 },
   handle: { width: 40, height: 4, borderRadius: 2, backgroundColor: "#444", alignSelf: "center" },
