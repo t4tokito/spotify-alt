@@ -153,7 +153,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         ensureConfigured();
         const u = auth.currentUser;
         if (!u) throw new Error("You must be signed in.");
-        await updatePhotoDoc(u.uid, photo);
+        await updatePhotoDoc(u.uid, profile?.username ?? "", photo);
         setProfile((prev) => ({ ...prev, photoURL: photo }));
       },
       signOut: () => {

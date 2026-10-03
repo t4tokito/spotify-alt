@@ -1,10 +1,11 @@
 import { useState } from "react";
-import { ActivityIndicator, FlatList, Pressable, StyleSheet, Text, TextInput, View } from "react-native";
+import { ActivityIndicator, FlatList, Image, Pressable, StyleSheet, Text, TextInput, View } from "react-native";
 import { useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Song, searchSongs } from "../lib/music";
 import { FoundUser, searchUsernames } from "../lib/usernames";
+import { AVATARS } from "../lib/avatars";
 import { SongRow } from "../components/SongRow";
 import { C, tint } from "../lib/theme";
 
@@ -106,9 +107,13 @@ export default function Search() {
               onPress={() => router.push(`/user/${encodeURIComponent(item.username)}` as any)}
               style={({ pressed }) => [s.person, pressed && { opacity: 0.6 }]}
             >
-              <View style={s.avatar}>
-                <Text style={s.avatarText}>{(item.username[0] ?? "?").toUpperCase()}</Text>
-              </View>
+              {item.photoURL && AVATARS[item.photoURL] ? (
+                <Image source={AVATARS[item.photoURL]} style={s.avatarImg} />
+              ) : (
+                <View style={s.avatar}>
+                  <Text style={s.avatarText}>{(item.username[0] ?? "?").toUpperCase()}</Text>
+                </View>
+              )}
               <Text style={s.personName}>{item.username}</Text>
               <Ionicons name="chevron-forward" size={20} color={C.neutral} />
             </Pressable>
@@ -145,5 +150,6 @@ const s = StyleSheet.create({
     backgroundColor: tint(C.accent, 0.2), alignItems: "center", justifyContent: "center",
   },
   avatarText: { color: C.accent, fontSize: 20, fontWeight: "800" },
+  avatarImg: { width: 48, height: 48, borderRadius: 24, backgroundColor: C.surface2 },
   personName: { flex: 1, color: C.text, fontSize: 16, fontWeight: "700", letterSpacing: -0.2 },
 });

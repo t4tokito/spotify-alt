@@ -66,7 +66,7 @@ export async function isUsernameAvailable(username: string): Promise<boolean> {
   return !snap.exists();
 }
 
-export type FoundUser = { username: string; uid: string };
+export type FoundUser = { username: string; uid: string; photoURL?: string | null };
 
 /** Prefix-search usernames (doc ids are lowercased usernames). */
 export async function searchUsernames(q: string, max = 10): Promise<FoundUser[]> {
@@ -83,7 +83,13 @@ export async function searchUsernames(q: string, max = 10): Promise<FoundUser[]>
   const out: FoundUser[] = [];
   snap.forEach((d) => {
     const data = d.data();
-    if (data.username && data.uid) out.push({ username: data.username as string, uid: data.uid as string });
+    if (data.username && data.uid) {
+      out.push({
+        username: data.username as string,
+        uid: data.uid as string,
+        photoURL: (data.photoURL as string) ?? null,
+      });
+    }
   });
   return out;
 }
@@ -124,7 +130,7 @@ export async function claimUsername(
   await runTransaction(db, async (tx) => {
     const existing = await tx.get(unameRef);
     if (existing.exists()) throw new Error("This username is already taken.");
-    tx.set(unameRef, { uid, email, username });
+    tx.set(unameRef, { uid, email, username, photoURL: null });
     tx.set(
       userRef,
       { username, email, created_at: serverTimestamp() },
@@ -150,18 +156,23 @@ export async function changeUsername(
   if (oldKey === newKey) return;
 
   const userSnap = await getDoc(doc(db, "users", uid));
-  const email = (userSnap.data()?.email as string) ?? "";
+  const userData = userSnap.data();
+  const email = (userData?.email as string) ?? "";
+  const photo = (userData?.photoURL as string) ?? null;
 
   await runTransaction(db, async (tx) => {
     const taken = await tx.get(doc(db, "usernames", newKey));
     if (taken.exists()) throw new Error("This username is already taken.");
-    tx.set(doc(db, "usernames", newKey), { uid, email, username: next });
+    tx.set(doc(db, "usernames", newKey), { uid, email, username: next, photoURL: photo });
     tx.delete(doc(db, "usernames", oldKey));
     tx.update(doc(db, "users", uid), { username: next });
   });
 }
 
-/** Set profile picture (key of a bundled avatar). */
-export async function updatePhoto(uid: string, photo: string): Promise<void> {
+/** Set profile picture (key of a bundled avatar). Mirrors into the public username doc. */
+export async function updatePhoto(uid: string, username: string, photo: string): Promise<void> {
   await updateDoc(doc(db, "users", uid), { photoURL: photo });
+  if (username.trim()) {
+    await updateDoc(doc(db, "usernames", key(username)), { photoURL: photo }).catch(() => {});
+  }
 }
