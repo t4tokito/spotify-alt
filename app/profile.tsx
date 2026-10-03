@@ -184,7 +184,7 @@ export default function Profile() {
                         style={s.cell}
                       >
                         {pl.icon && PLAYLIST_ICONS[pl.icon] ? (
-                          <Image source={PLAYLIST_ICONS[pl.icon]} style={s.cellImg} />
+                          <Image source={PLAYLIST_ICONS[pl.icon]} resizeMode="contain" style={s.cellImg} />
                         ) : pl.songs?.[0]?.image ? (
                           <Image source={{ uri: pl.songs[0].imageSmall || pl.songs[0].image }} style={s.cellImg} />
                         ) : (

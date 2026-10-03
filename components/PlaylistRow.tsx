@@ -15,7 +15,7 @@ export function PlaylistRow({ pl, ownerUid }: { pl: Playlist; ownerUid?: string 
     >
       <View style={s.art}>
         {pl.icon && PLAYLIST_ICONS[pl.icon] ? (
-          <Image source={PLAYLIST_ICONS[pl.icon]} style={s.artImg} />
+          <Image source={PLAYLIST_ICONS[pl.icon]} resizeMode="contain" style={s.artImg} />
         ) : (
           <Ionicons name="musical-notes" size={22} color={C.accent} />
         )}

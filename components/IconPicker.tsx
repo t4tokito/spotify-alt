@@ -18,7 +18,7 @@ export function IconPicker({
       contentContainerStyle={s.list}
       renderItem={({ item }) => (
         <Pressable onPress={() => onSelect(item)} style={[s.pick, selected === item && s.sel]}>
-          <Image source={PLAYLIST_ICONS[item]} style={s.img} />
+          <Image source={PLAYLIST_ICONS[item]} resizeMode="contain" style={s.img} />
         </Pressable>
       )}
     />

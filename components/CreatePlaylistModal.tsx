@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Image, Modal, Pressable, StyleSheet, Text, TextInput, View } from "react-native";
+import { Image, KeyboardAvoidingView, Modal, Platform, Pressable, StyleSheet, Text, TextInput, View } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { usePlaylists } from "../lib/playlists";
@@ -42,8 +42,12 @@ export function CreatePlaylistModal({
 
   return (
     <Modal visible={visible} transparent animationType="slide" onRequestClose={close}>
-      <Pressable style={s.back} onPress={close} />
-      <View style={[s.sheet, { paddingBottom: Math.max(insets.bottom, 24) }]}>
+      <KeyboardAvoidingView
+        behavior={Platform.OS === "ios" ? "padding" : "height"}
+        style={s.kb}
+      >
+        <Pressable style={s.back} onPress={close} />
+        <View style={[s.sheet, { paddingBottom: Math.max(insets.bottom, 24) }]}>
         <View style={s.handle} />
         <Text style={s.title}>New playlist</Text>
 
@@ -80,7 +84,7 @@ export function CreatePlaylistModal({
                   onPress={() => setIcon(k)}
                   style={[s.pick, icon === k && s.pickSel]}
                 >
-                  <Image source={PLAYLIST_ICONS[k]} style={s.pickImg} />
+                  <Image source={PLAYLIST_ICONS[k]} resizeMode="contain" style={s.pickImg} />
                   {icon === k && (
                     <View style={s.pickCheck}>
                       <Ionicons name="checkmark-circle" size={24} color={C.accent} />
@@ -112,12 +116,14 @@ export function CreatePlaylistModal({
             </Pressable>
           </>
         )}
-      </View>
+        </View>
+      </KeyboardAvoidingView>
     </Modal>
   );
 }
 
 const s = StyleSheet.create({
+  kb: { flex: 1 },
   back: { flex: 1, backgroundColor: "rgba(0,0,0,0.6)" },
   sheet: { backgroundColor: "#1a1a1a", borderTopLeftRadius: 20, borderTopRightRadius: 20, padding: 20, gap: 12 },
   handle: { width: 40, height: 4, borderRadius: 2, backgroundColor: "#444", alignSelf: "center" },

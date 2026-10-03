@@ -22,7 +22,7 @@ function totalMins(songs: { duration: number }[]): string {
 
 function Cover({ icon, songs }: { icon?: string | null; songs: { image: string; imageSmall: string }[] }) {
   if (icon && PLAYLIST_ICONS[icon]) {
-    return <Image source={PLAYLIST_ICONS[icon]} style={s.cover} />;
+    return <Image source={PLAYLIST_ICONS[icon]} resizeMode="contain" style={s.cover} />;
   }
   const arts = songs.slice(0, 4);
   if (arts.length === 0) {
