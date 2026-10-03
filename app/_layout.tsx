@@ -71,6 +71,8 @@ export default function RootLayout() {
                 <Stack.Screen name="forgot-password" />
                 <Stack.Screen name="player" options={{ presentation: "modal" }} />
                 <Stack.Screen name="playlist/[id]" />
+                <Stack.Screen name="playlists" />
+                <Stack.Screen name="liked" />
               </Stack>
             </Shell>
           </PlaylistProvider>
