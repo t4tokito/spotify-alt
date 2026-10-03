@@ -1,26 +1,40 @@
 import { useEffect, useState } from "react";
-import { ActivityIndicator, Image, Modal, Pressable, StyleSheet, Text, TextInput, View } from "react-native";
+import { ActivityIndicator, FlatList, Image, Modal, Pressable, StyleSheet, Text, TextInput, View } from "react-native";
 import { useRouter } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
+import { LinearGradient } from "expo-linear-gradient";
 import { authErrorMessage, useAuth } from "../lib/auth";
 import { usePlayer } from "../lib/player";
+import { usePlaylists } from "../lib/playlists";
+import { SongRow } from "../components/SongRow";
 import { AVATARS, AVATAR_KEYS } from "../lib/avatars";
+import { PLAYLIST_ICONS } from "../lib/playlistIcons";
 import { getFollowers, getFollowing } from "../lib/cloud";
-import { C } from "../lib/theme";
+import { C, tint } from "../lib/theme";
+
+type Tab = "playlists" | "liked" | "history";
 
 export default function Profile() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
   const { profile, user, signOut, updateUsername, updatePhoto } = useAuth();
   const { liked, history } = usePlayer();
-  const likedCount = Object.keys(liked).length;
+  const { playlists } = usePlaylists();
+
   const name = profile?.username ?? "Music Lover";
   const initial = (name.trim()[0] ?? "M").toUpperCase();
   const avatarSrc = profile?.photoURL ? AVATARS[profile.photoURL] : null;
+  const likedList = Object.values(liked);
 
+  const [tab, setTab] = useState<Tab>("playlists");
   const [followersCount, setFollowersCount] = useState(0);
   const [followingCount, setFollowingCount] = useState(0);
+  const [editOpen, setEditOpen] = useState(false);
+  const [newName, setNewName] = useState("");
+  const [tempAvatar, setTempAvatar] = useState<string | null>(null);
+  const [nameError, setNameError] = useState("");
+  const [busy, setBusy] = useState(false);
 
   useEffect(() => {
     if (!user?.uid) return;
@@ -42,151 +56,172 @@ export default function Profile() {
     };
   }, [user?.uid]);
 
-  const [avatarOpen, setAvatarOpen] = useState(false);
-  const [editing, setEditing] = useState(false);  const [newName, setNewName] = useState("");
-  const [nameError, setNameError] = useState("");
-  const [busy, setBusy] = useState(false);
-
-  async function saveName() {
+  function openEdit() {
+    setNewName(name === "Music Lover" ? "" : name);
+    setTempAvatar(profile?.photoURL ?? null);
     setNameError("");
-    if (!newName.trim()) return setNameError("Enter a username.");
+    setEditOpen(true);
+  }
+
+  async function saveEdit() {
+    setNameError("");
     setBusy(true);
     try {
-      await updateUsername(newName);
-      setEditing(false);
-      setNewName("");
+      const nn = newName.trim();
+      if (nn && nn !== name) await updateUsername(nn);
+      if (tempAvatar && tempAvatar !== profile?.photoURL) await updatePhoto(tempAvatar);
+      setEditOpen(false);
     } catch (e) {
       setNameError(authErrorMessage(e));
     }
     setBusy(false);
   }
 
-  async function pickAvatar(key: string) {
-    try {
-      await updatePhoto(key);
-    } catch {}
-    setAvatarOpen(false);
-  }
+  const tabData =
+    tab === "playlists" ? null : tab === "liked" ? likedList : history;
 
   return (
     <View style={[s.root, { paddingTop: insets.top }]}>
-      <Text style={s.title}>Profile</Text>
-      <View style={s.card}>
-        <Pressable onPress={() => setAvatarOpen(true)} style={s.avatarWrap}>
-          {avatarSrc ? (
-            <Image source={avatarSrc} style={s.avatarImg} />
-          ) : (
-            <View style={s.avatar}>
-              <Text style={s.avatarText}>{initial}</Text>
-            </View>
-          )}
-          <View style={s.camBadge}>
-            <Ionicons name="camera" size={14} color={C.onAccent} />
-          </View>
+      <View style={s.topBar}>
+        <Text style={s.topName}>{name}</Text>
+        <Pressable onPress={signOut} hitSlop={10} style={s.topBtn}>
+          <Ionicons name="log-out-outline" size={24} color={C.text} />
         </Pressable>
-
-        {editing ? (
-          <View style={s.editRow}>
-            <TextInput
-              value={newName}
-              onChangeText={setNewName}
-              placeholder={name}
-              placeholderTextColor="#777"
-              style={s.nameInput}
-              autoCapitalize="none"
-              autoFocus
-            />
-            <Pressable onPress={saveName} disabled={busy} style={s.saveBtn}>
-              {busy ? (
-                <ActivityIndicator color={C.onAccent} size="small" />
-              ) : (
-                <Ionicons name="checkmark" size={20} color={C.onAccent} />
-              )}
-            </Pressable>
-            <Pressable
-              onPress={() => {
-                setEditing(false);
-                setNewName("");
-                setNameError("");
-              }}
-              style={s.cancelBtn}
-            >
-              <Ionicons name="close" size={20} color={C.textDim} />
-            </Pressable>
-          </View>
-        ) : (
-          <View style={s.nameRow}>
-            <Text style={s.name}>{name}</Text>
-            <Pressable
-              onPress={() => {
-                setNewName(name === "Music Lover" ? "" : name);
-                setEditing(true);
-              }}
-              hitSlop={8}
-            >
-              <Ionicons name="pencil-outline" size={17} color={C.neutral} />
-            </Pressable>
-          </View>
-        )}
-        {!!nameError && <Text style={s.error}>{nameError}</Text>}
-        <Text style={s.email}>{profile?.email ?? user?.email ?? ""}</Text>
-        <View style={s.counts}>
-          <Pressable onPress={() => router.push(`/follows?type=followers&uid=${user?.uid}` as any)}>
-            <Text style={s.countText}><Text style={s.countNum}>{followersCount}</Text> followers</Text>
-          </Pressable>
-          <Text style={s.dot}>•</Text>
-          <Pressable onPress={() => router.push(`/follows?type=following&uid=${user?.uid}` as any)}>
-            <Text style={s.countText}><Text style={s.countNum}>{followingCount}</Text> following</Text>
-          </Pressable>
-        </View>
       </View>
 
-      <View style={s.stats}>
-        <View style={s.stat}>
-          <Ionicons name="heart" size={20} color={C.like} />
-          <Text style={s.statNum}>{likedCount}</Text>
-          <Text style={s.statLabel}>Liked</Text>
-        </View>
-        <View style={s.stat}>
-          <Ionicons name="time-outline" size={20} color={C.neutral} />
-          <Text style={s.statNum}>{history.length}</Text>
-          <Text style={s.statLabel}>Played</Text>
-        </View>
-      </View>
-      <Pressable onPress={() => router.push("/stats" as any)} style={({ pressed }) => [s.statsBtn, pressed && { opacity: 0.7 }]}>
-        <Ionicons name="stats-chart-outline" size={20} color={C.accent} />
-        <Text style={s.statsBtnText}>Your Stats</Text>
-        <View style={{ flex: 1 }} />
-        <Ionicons name="chevron-forward" size={20} color={C.neutral} />
-      </Pressable>
-      <Pressable onPress={signOut} style={({ pressed }) => [s.outBtn, pressed && { opacity: 0.75 }]}>
-        <Ionicons name="log-out-outline" size={20} color={C.onAccent} />
-        <Text style={s.outText}>Log Out</Text>
-      </Pressable>
-
-      <Modal visible={avatarOpen} transparent animationType="fade" onRequestClose={() => setAvatarOpen(false)}>
-        <Pressable style={s.back} onPress={() => setAvatarOpen(false)} />
-        <View style={[s.sheet, { paddingBottom: Math.max(insets.bottom, 24) }]}>
-          <Text style={s.sheetTitle}>Choose a picture</Text>
-          <View style={s.grid}>
-            {AVATAR_KEYS.map((k) => {
-              const selected = profile?.photoURL === k;
-              return (
-                <Pressable
-                  key={k}
-                  onPress={() => pickAvatar(k)}
-                  style={[s.pick, selected && s.pickSelected]}
-                >
-                  <Image source={AVATARS[k]} style={s.pickImg} />
-                  {selected && (
-                    <View style={s.pickCheck}>
-                      <Ionicons name="checkmark-circle" size={24} color={C.accent} />
+      <FlatList
+        key={tab}
+        data={tab === "playlists" ? playlists : tabData ?? []}
+        keyExtractor={(i: any) => (tab === "playlists" ? i.id : `t-${i.id}`)}
+        numColumns={tab === "playlists" ? 3 : 1}
+        columnWrapperStyle={tab === "playlists" ? s.gridRow : undefined}
+        ListHeaderComponent={
+          <View>
+            <View style={s.head}>
+              <LinearGradient
+                colors={[C.accent, "#FF5C7A", "#FF9F43"]}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 1 }}
+                style={s.ring}
+              >
+                <View style={s.ringInner}>
+                  {avatarSrc ? (
+                    <Image source={avatarSrc} style={s.avatarImg} />
+                  ) : (
+                    <View style={s.avatar}>
+                      <Text style={s.avatarText}>{initial}</Text>
                     </View>
                   )}
+                </View>
+              </LinearGradient>
+              <Pressable onPress={() => router.push("/playlists" as any)} style={s.stat}>
+                <Text style={s.statNum}>{playlists.length}</Text>
+                <Text style={s.statLabel}>playlists</Text>
+              </Pressable>
+              <Pressable onPress={() => router.push(`/follows?type=followers&uid=${user?.uid}` as any)} style={s.stat}>
+                <Text style={s.statNum}>{followersCount}</Text>
+                <Text style={s.statLabel}>followers</Text>
+              </Pressable>
+              <Pressable onPress={() => router.push(`/follows?type=following&uid=${user?.uid}` as any)} style={s.stat}>
+                <Text style={s.statNum}>{followingCount}</Text>
+                <Text style={s.statLabel}>following</Text>
+              </Pressable>
+            </View>
+            <Text style={s.displayName}>{name}</Text>
+            {!!(profile?.email ?? user?.email) && (
+              <Text style={s.bio}>{profile?.email ?? user?.email}</Text>
+            )}
+            <View style={s.btnRow}>
+              <Pressable onPress={openEdit} style={({ pressed }) => [s.editBtn, pressed && { opacity: 0.75 }]}>
+                <Text style={s.editText}>Edit profile</Text>
+              </Pressable>
+              <Pressable onPress={() => router.push("/stats" as any)} style={({ pressed }) => [s.editBtn, pressed && { opacity: 0.75 }]}>
+                <Ionicons name="stats-chart-outline" size={16} color={C.text} />
+                <Text style={s.editText}>Stats</Text>
+              </Pressable>
+            </View>
+            <View style={s.tabs}>
+              {(
+                [
+                  { k: "playlists", icon: "grid-outline" },
+                  { k: "liked", icon: "heart-outline" },
+                  { k: "history", icon: "time-outline" },
+                ] as const
+              ).map((t) => (
+                <Pressable
+                  key={t.k}
+                  onPress={() => setTab(t.k)}
+                  style={[s.tab, tab === t.k && s.tabOn]}
+                >
+                  <Ionicons
+                    name={(tab === t.k ? t.icon.replace("-outline", "") : t.icon) as any}
+                    size={24}
+                    color={tab === t.k ? C.text : C.neutral}
+                  />
                 </Pressable>
-              );
-            })}
+              ))}
+            </View>
           </View>
+        }
+        renderItem={({ item }: any) =>
+          tab === "playlists" ? (
+            <Pressable
+              onPress={() => router.push(`/playlist/${item.id}` as any)}
+              style={s.cell}
+            >
+              {item.icon && PLAYLIST_ICONS[item.icon] ? (
+                <Image source={PLAYLIST_ICONS[item.icon]} style={s.cellImg} />
+              ) : item.songs?.[0]?.image ? (
+                <Image source={{ uri: item.songs[0].imageSmall || item.songs[0].image }} style={s.cellImg} />
+              ) : (
+                <View style={[s.cellImg, s.cellEmpty]}>
+                  <Ionicons name="musical-notes" size={28} color={C.accent} />
+                </View>
+              )}
+            </Pressable>
+          ) : (
+            <SongRow song={item} queue={tab === "liked" ? likedList : history} />
+          )
+        }
+        ListEmptyComponent={
+          <Text style={s.empty}>
+            {tab === "playlists" ? "No playlists yet." : tab === "liked" ? "Nothing liked yet." : "Nothing played yet."}
+          </Text>
+        }
+      />
+
+      <Modal visible={editOpen} transparent animationType="slide" onRequestClose={() => setEditOpen(false)}>
+        <Pressable style={s.back} onPress={() => setEditOpen(false)} />
+        <View style={[s.sheet, { paddingBottom: Math.max(insets.bottom, 24) }]}>
+          <View style={s.handle} />
+          <Text style={s.sheetTitle}>Edit profile</Text>
+          <View style={s.avatarGrid}>
+            {AVATAR_KEYS.map((k) => (
+              <Pressable
+                key={k}
+                onPress={() => setTempAvatar(k)}
+                style={[s.pick, tempAvatar === k && s.pickSel]}
+              >
+                <Image source={AVATARS[k]} style={s.pickImg} />
+              </Pressable>
+            ))}
+          </View>
+          <TextInput
+            value={newName}
+            onChangeText={setNewName}
+            placeholder="Username (5-15 characters)"
+            placeholderTextColor="#777"
+            style={s.input}
+            autoCapitalize="none"
+          />
+          {!!nameError && <Text style={s.error}>{nameError}</Text>}
+          <Pressable onPress={saveEdit} disabled={busy} style={[s.saveBtn, busy && { opacity: 0.7 }]}>
+            {busy ? (
+              <ActivityIndicator color={C.onAccent} />
+            ) : (
+              <Text style={s.saveText}>Save</Text>
+            )}
+          </Pressable>
         </View>
       </Modal>
     </View>
@@ -194,60 +229,48 @@ export default function Profile() {
 }
 
 const s = StyleSheet.create({
-  root: { flex: 1, backgroundColor: C.bg, paddingHorizontal: 16 },
-  title: { color: C.text, fontSize: 28, fontWeight: "900", letterSpacing: -0.6, marginBottom: 16 },
-  card: { backgroundColor: C.surface, borderRadius: 18, padding: 24, alignItems: "center" },
-  avatarWrap: { position: "relative" },
+  root: { flex: 1, backgroundColor: C.bg },
+  topBar: { flexDirection: "row", alignItems: "center", justifyContent: "center", paddingHorizontal: 16, paddingBottom: 6 },
+  topName: { flex: 1, textAlign: "center", color: C.text, fontSize: 18, fontWeight: "800", letterSpacing: -0.3, marginLeft: 34 },
+  topBtn: { padding: 6, width: 34 },
+  head: { flexDirection: "row", alignItems: "center", paddingHorizontal: 16, paddingTop: 8, gap: 4 },
+  ring: { width: 92, height: 92, borderRadius: 46, alignItems: "center", justifyContent: "center" },
+  ringInner: { width: 84, height: 84, borderRadius: 42, backgroundColor: C.bg, alignItems: "center", justifyContent: "center" },
   avatar: {
-    width: 88, height: 88, borderRadius: 44,
+    width: 78, height: 78, borderRadius: 39,
     backgroundColor: C.accent, alignItems: "center", justifyContent: "center",
   },
-  avatarImg: { width: 88, height: 88, borderRadius: 44, backgroundColor: C.surface2 },
-  avatarText: { color: C.onAccent, fontSize: 34, fontWeight: "900" },
-  camBadge: {
-    position: "absolute", right: 0, bottom: 0,
-    width: 28, height: 28, borderRadius: 14,
-    backgroundColor: C.accent, alignItems: "center", justifyContent: "center",
-    borderWidth: 2, borderColor: C.surface,
-  },
-  nameRow: { flexDirection: "row", alignItems: "center", gap: 8, marginTop: 12 },
-  name: { color: C.text, fontSize: 22, fontWeight: "800", letterSpacing: -0.4 },
-  editRow: { flexDirection: "row", alignItems: "center", gap: 8, marginTop: 12, width: "100%" },
-  nameInput: {
-    flex: 1, backgroundColor: C.surface2, borderRadius: 10,
-    padding: 11, color: C.text, fontSize: 16,
-  },
-  saveBtn: {
-    width: 44, height: 44, borderRadius: 22,
-    backgroundColor: C.accent, alignItems: "center", justifyContent: "center",
-  },
-  cancelBtn: { padding: 8 },
-  error: { color: C.danger, fontSize: 13, marginTop: 8 },
-  email: { color: C.textDim, marginTop: 6 },
-  counts: { flexDirection: "row", alignItems: "center", gap: 8, marginTop: 10 },
-  countText: { color: C.textDim, fontSize: 14 },
-  countNum: { color: C.text, fontWeight: "800" },
-  dot: { color: C.neutral },
-  stats: { flexDirection: "row", gap: 12, marginTop: 12 },
-  stat: { flex: 1, backgroundColor: C.surface, borderRadius: 18, padding: 16, alignItems: "center", gap: 4 },
-  statNum: { color: C.text, fontSize: 20, fontWeight: "800" },
+  avatarText: { color: C.onAccent, fontSize: 30, fontWeight: "900" },
+  avatarImg: { width: 78, height: 78, borderRadius: 39, backgroundColor: C.surface2 },
+  stat: { flex: 1, alignItems: "center", gap: 2 },
+  statNum: { color: C.text, fontSize: 17, fontWeight: "800" },
   statLabel: { color: C.textDim, fontSize: 12 },
-  statsBtn: {
-    flexDirection: "row", alignItems: "center", gap: 10,
-    backgroundColor: C.surface, borderRadius: 18, padding: 16, marginTop: 12,
+  displayName: { color: C.text, fontSize: 15, fontWeight: "800", paddingHorizontal: 16, marginTop: 10 },
+  bio: { color: C.textDim, fontSize: 13, paddingHorizontal: 16, marginTop: 2 },
+  btnRow: { flexDirection: "row", gap: 8, paddingHorizontal: 16, marginTop: 12 },
+  editBtn: {
+    flex: 1, flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 6,
+    backgroundColor: C.surface2, borderRadius: 10, paddingVertical: 10,
   },
-  statsBtnText: { color: C.text, fontSize: 16, fontWeight: "700" },
-  outBtn: {
-    flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 8,
-    backgroundColor: C.accent, borderRadius: 24, paddingVertical: 14, marginTop: 20,
-  },
-  outText: { color: C.onAccent, fontWeight: "800", fontSize: 16 },
+  editText: { color: C.text, fontWeight: "700", fontSize: 14 },
+  tabs: { flexDirection: "row", marginTop: 12, borderTopWidth: 1, borderTopColor: "rgba(255,255,255,0.08)" },
+  tab: { flex: 1, alignItems: "center", paddingVertical: 10, borderBottomWidth: 1, borderBottomColor: "transparent" },
+  tabOn: { borderBottomColor: C.text },
+  gridRow: { paddingHorizontal: 2, gap: 2 },
+  cell: { flex: 1 / 3, aspectRatio: 1, padding: 1 },
+  cellImg: { flex: 1, backgroundColor: C.surface },
+  cellEmpty: { alignItems: "center", justifyContent: "center" },
+  empty: { color: C.textFaint, textAlign: "center", marginTop: 30 },
   back: { flex: 1, backgroundColor: "rgba(0,0,0,0.6)" },
-  sheet: { backgroundColor: "#1a1a1a", borderTopLeftRadius: 20, borderTopRightRadius: 20, padding: 20 },
-  sheetTitle: { color: C.text, fontSize: 18, fontWeight: "800", textAlign: "center", marginBottom: 16 },
-  grid: { flexDirection: "row", flexWrap: "wrap", gap: 12, justifyContent: "center" },
+  sheet: { backgroundColor: "#1a1a1a", borderTopLeftRadius: 20, borderTopRightRadius: 20, padding: 20, gap: 12 },
+  handle: { width: 40, height: 4, borderRadius: 2, backgroundColor: "#444", alignSelf: "center" },
+  sheetTitle: { color: C.text, fontSize: 18, fontWeight: "800", textAlign: "center" },
+  avatarGrid: { flexDirection: "row", flexWrap: "wrap", gap: 12, justifyContent: "center" },
   pick: { borderRadius: 16, borderWidth: 2, borderColor: "transparent" },
-  pickSelected: { borderColor: C.accent },
-  pickImg: { width: 88, height: 88, borderRadius: 14, backgroundColor: C.surface2 },
-  pickCheck: { position: "absolute", top: -8, right: -8, backgroundColor: "#1a1a1a", borderRadius: 12 },
+  pickSel: { borderColor: C.accent },
+  pickImg: { width: 80, height: 80, borderRadius: 14, backgroundColor: C.surface2 },
+  input: { backgroundColor: C.surface2, borderRadius: 12, padding: 14, color: C.text, fontSize: 16 },
+  error: { color: C.danger, fontSize: 13, textAlign: "center" },
+  saveBtn: { backgroundColor: C.accent, borderRadius: 24, paddingVertical: 14, alignItems: "center" },
+  saveText: { color: C.onAccent, fontWeight: "800", fontSize: 15 },
 });
