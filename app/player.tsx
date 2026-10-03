@@ -70,7 +70,13 @@ export default function PlayerScreen() {
         <Pressable onPress={() => setPlOpen(true)} hitSlop={10}>
           <Ionicons name="list-outline" size={28} color="#fff" />
         </Pressable>
-        <Pressable onPress={() => startRadio(current)} hitSlop={10}>
+        <Pressable
+          onPress={async () => {
+            await startRadio(current);
+            setQueueOpen(true);
+          }}
+          hitSlop={10}
+        >
           <Ionicons name="radio-outline" size={28} color="#fff" />
         </Pressable>
       </View>
