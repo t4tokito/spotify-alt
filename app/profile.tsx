@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { ActivityIndicator, FlatList, Image, Modal, Pressable, StyleSheet, Text, TextInput, useWindowDimensions, View } from "react-native";
+import { ActivityIndicator, FlatList, Image, Modal, Pressable, StyleSheet, Text, TextInput, View } from "react-native";
 import { useRouter } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
@@ -8,6 +8,7 @@ import { authErrorMessage, useAuth } from "../lib/auth";
 import { usePlayer } from "../lib/player";
 import { usePlaylists } from "../lib/playlists";
 import { SongRow } from "../components/SongRow";
+import { PlaylistRow } from "../components/PlaylistRow";
 import { AVATARS, AVATAR_KEYS } from "../lib/avatars";
 import { PLAYLIST_ICONS } from "../lib/playlistIcons";
 import { getFollowers, getFollowing } from "../lib/cloud";
@@ -79,21 +80,6 @@ export default function Profile() {
 
   const tabData =
     tab === "playlists" ? null : tab === "liked" ? likedList : history;
-
-  // exact thirds of the content width (root has 16px side padding)
-  const { width: winW } = useWindowDimensions();
-  const CELL = (winW - 32) / 3;
-  const gridRows: (typeof playlists)[] = [];
-  if (tab === "playlists") {
-    playlists.forEach((p, i) => {
-      if (i % 3 === 0) gridRows.push([]);
-      gridRows[gridRows.length - 1].push(p);
-    });
-  }
-
-  useEffect(() => {
-    console.log("[profile-grid] winW:", winW, "playlists:", playlists.length, "cell:", Math.round((winW - 32) / 3));
-  }, []);
 
   return (
     <View style={[s.root, { paddingTop: insets.top }]}>
@@ -176,29 +162,8 @@ export default function Profile() {
             </View>
             {tab === "playlists" && (
               <View>
-                {gridRows.map((row, ri) => (
-                  <View key={`row-${ri}`} style={s.gridRow}>
-                    {row.map((pl: any) => (
-                      <Pressable
-                        key={pl.id}
-                        onPress={() => router.push(`/playlist/${pl.id}` as any)}
-                        style={[s.cell, { width: CELL, height: CELL }]}
-                      >
-                        {pl.icon && PLAYLIST_ICONS[pl.icon] ? (
-                          <Image source={PLAYLIST_ICONS[pl.icon]} resizeMode="contain" style={s.cellImg} />
-                        ) : pl.songs?.[0]?.image ? (
-                          <Image source={{ uri: pl.songs[0].imageSmall || pl.songs[0].image }} style={s.cellImg} />
-                        ) : (
-                          <View style={[s.cellImg, s.cellEmpty]}>
-                            <Ionicons name="musical-notes" size={28} color={C.accent} />
-                          </View>
-                        )}
-                      </Pressable>
-                    ))}
-                    {Array.from({ length: 3 - row.length }).map((_, i) => (
-                      <View key={`e-${i}`} style={s.cell} />
-                    ))}
-                  </View>
+                {playlists.map((pl) => (
+                  <PlaylistRow key={pl.id} pl={pl} />
                 ))}
                 {playlists.length === 0 && <Text style={s.empty}>No playlists yet.</Text>}
               </View>
@@ -283,10 +248,6 @@ const s = StyleSheet.create({
   tabs: { flexDirection: "row", marginTop: 12, borderTopWidth: 1, borderTopColor: "rgba(255,255,255,0.08)" },
   tab: { flex: 1, alignItems: "center", paddingVertical: 10, borderBottomWidth: 1, borderBottomColor: "transparent" },
   tabOn: { borderBottomColor: C.text },
-  gridRow: { flexDirection: "row" },
-  cell: { padding: 1 },
-  cellImg: { flex: 1, borderRadius: 4, backgroundColor: C.surface },
-  cellEmpty: { alignItems: "center", justifyContent: "center" },
   empty: { color: C.textFaint, textAlign: "center", marginTop: 30 },
   back: { flex: 1, backgroundColor: "rgba(0,0,0,0.6)" },
   sheet: { backgroundColor: "#1a1a1a", borderTopLeftRadius: 20, borderTopRightRadius: 20, padding: 20, gap: 12 },
