@@ -1,10 +1,11 @@
 import { useEffect, useState } from "react";
-import { ActivityIndicator, FlatList, Pressable, StyleSheet, Text, View } from "react-native";
+import { ActivityIndicator, FlatList, Image, Pressable, StyleSheet, Text, View } from "react-native";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { getProfile, resolveUsernameToUid, type Profile } from "../../lib/usernames";
 import { loadUserPublicPlaylists } from "../../lib/cloud";
+import { AVATARS } from "../../lib/avatars";
 import type { Playlist } from "../../lib/playlists";
 import { PlaylistRow } from "../../components/PlaylistRow";
 import { SectionTitle } from "../../components/SectionTitle";
@@ -47,6 +48,7 @@ export default function UserProfile() {
   }, [username]);
 
   const display = profile?.username ?? decodeURIComponent(String(username ?? ""));
+  const avatarSrc = profile?.photoURL ? AVATARS[profile.photoURL] : null;
 
   return (
     <View style={[s.root, { paddingTop: insets.top }]}>
@@ -64,9 +66,13 @@ export default function UserProfile() {
           ListHeaderComponent={
             <View>
               <View style={s.card}>
-                <View style={s.avatar}>
-                  <Text style={s.avatarText}>{(display.trim()[0] ?? "?").toUpperCase()}</Text>
-                </View>
+                {avatarSrc ? (
+                  <Image source={avatarSrc} style={s.avatarImg} />
+                ) : (
+                  <View style={s.avatar}>
+                    <Text style={s.avatarText}>{(display.trim()[0] ?? "?").toUpperCase()}</Text>
+                  </View>
+                )}
                 <Text style={s.name}>{display}</Text>
                 <Text style={s.sub}>{playlists.length} public playlists</Text>
               </View>
@@ -90,6 +96,7 @@ const s = StyleSheet.create({
     backgroundColor: C.accent, alignItems: "center", justifyContent: "center",
   },
   avatarText: { color: C.onAccent, fontSize: 34, fontWeight: "900" },
+  avatarImg: { width: 88, height: 88, borderRadius: 44, backgroundColor: C.surface2 },
   name: { color: C.text, fontSize: 24, fontWeight: "900", letterSpacing: -0.5, marginTop: 12 },
   sub: { color: C.textDim, marginTop: 4 },
   empty: { color: C.textFaint, textAlign: "center", marginTop: 30 },
