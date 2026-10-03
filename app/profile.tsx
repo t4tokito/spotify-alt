@@ -80,7 +80,8 @@ export default function Profile() {
   const tabData =
     tab === "playlists" ? null : tab === "liked" ? likedList : history;
 
-  // manual 3-per-row grid (bulletproof on all RN versions)
+  // exact thirds of the content width (root has 16px side padding)
+  const CELL = (winW - 32) / 3;
   const gridRows: (typeof playlists)[] = [];
   if (tab === "playlists") {
     playlists.forEach((p, i) => {
@@ -175,14 +176,13 @@ export default function Profile() {
             </View>
             {tab === "playlists" && (
               <View>
-                <Text style={s.debug}>DEBUG rows={gridRows.length} total={playlists.length} w={Math.round(winW)}</Text>
                 {gridRows.map((row, ri) => (
                   <View key={`row-${ri}`} style={s.gridRow}>
                     {row.map((pl: any) => (
                       <Pressable
                         key={pl.id}
                         onPress={() => router.push(`/playlist/${pl.id}` as any)}
-                        style={s.cell}
+                        style={[s.cell, { width: CELL, height: CELL }]}
                       >
                         {pl.icon && PLAYLIST_ICONS[pl.icon] ? (
                           <Image source={PLAYLIST_ICONS[pl.icon]} resizeMode="contain" style={s.cellImg} />
@@ -284,8 +284,7 @@ const s = StyleSheet.create({
   tab: { flex: 1, alignItems: "center", paddingVertical: 10, borderBottomWidth: 1, borderBottomColor: "transparent" },
   tabOn: { borderBottomColor: C.text },
   gridRow: { flexDirection: "row" },
-  debug: { color: "#FF5C7A", textAlign: "center", padding: 8 },
-  cell: { width: "33.333%", aspectRatio: 1, padding: 1 },
+  cell: { padding: 1 },
   cellImg: { flex: 1, borderRadius: 4, backgroundColor: C.surface },
   cellEmpty: { alignItems: "center", justifyContent: "center" },
   empty: { color: C.textFaint, textAlign: "center", marginTop: 30 },
