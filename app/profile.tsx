@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { ActivityIndicator, FlatList, Image, Modal, Pressable, StyleSheet, Text, TextInput, View } from "react-native";
+import { ActivityIndicator, FlatList, Image, Modal, Pressable, StyleSheet, Text, TextInput, useWindowDimensions, View } from "react-native";
 import { useRouter } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
@@ -89,6 +89,11 @@ export default function Profile() {
     });
   }
 
+  const { width: winW } = useWindowDimensions();
+  useEffect(() => {
+    console.log("[profile-grid] winW:", winW, "playlists:", playlists.length);
+  }, []);
+
   return (
     <View style={[s.root, { paddingTop: insets.top }]}>
       <View style={s.topBar}>
@@ -100,8 +105,8 @@ export default function Profile() {
 
       <FlatList
         key={tab}
-        data={tab === "playlists" ? gridRows : tabData ?? []}
-        keyExtractor={(i: any, idx: number) => (tab === "playlists" ? `row-${idx}` : `t-${i.id}`)}
+        data={tab === "playlists" ? [] : tabData ?? []}
+        keyExtractor={(i: any) => `t-${i.id}`}
         ListHeaderComponent={
           <View>
             <View style={s.head}>
@@ -168,40 +173,46 @@ export default function Profile() {
                 </Pressable>
               ))}
             </View>
+            {tab === "playlists" && (
+              <View>
+                {gridRows.map((row, ri) => (
+                  <View key={`row-${ri}`} style={s.gridRow}>
+                    {row.map((pl: any) => (
+                      <Pressable
+                        key={pl.id}
+                        onPress={() => router.push(`/playlist/${pl.id}` as any)}
+                        style={s.cell}
+                      >
+                        {pl.icon && PLAYLIST_ICONS[pl.icon] ? (
+                          <Image source={PLAYLIST_ICONS[pl.icon]} style={s.cellImg} />
+                        ) : pl.songs?.[0]?.image ? (
+                          <Image source={{ uri: pl.songs[0].imageSmall || pl.songs[0].image }} style={s.cellImg} />
+                        ) : (
+                          <View style={[s.cellImg, s.cellEmpty]}>
+                            <Ionicons name="musical-notes" size={28} color={C.accent} />
+                          </View>
+                        )}
+                      </Pressable>
+                    ))}
+                    {Array.from({ length: 3 - row.length }).map((_, i) => (
+                      <View key={`e-${i}`} style={s.cell} />
+                    ))}
+                  </View>
+                ))}
+                {playlists.length === 0 && <Text style={s.empty}>No playlists yet.</Text>}
+              </View>
+            )}
           </View>
         }
-        renderItem={({ item }: any) =>
-          tab === "playlists" ? (
-            <View style={s.gridRow}>
-              {item.map((pl: any) => (
-                <Pressable
-                  key={pl.id}
-                  onPress={() => router.push(`/playlist/${pl.id}` as any)}
-                  style={s.cell}
-                >
-                  {pl.icon && PLAYLIST_ICONS[pl.icon] ? (
-                    <Image source={PLAYLIST_ICONS[pl.icon]} style={s.cellImg} />
-                  ) : pl.songs?.[0]?.image ? (
-                    <Image source={{ uri: pl.songs[0].imageSmall || pl.songs[0].image }} style={s.cellImg} />
-                  ) : (
-                    <View style={[s.cellImg, s.cellEmpty]}>
-                      <Ionicons name="musical-notes" size={28} color={C.accent} />
-                    </View>
-                  )}
-                </Pressable>
-              ))}
-              {Array.from({ length: 3 - item.length }).map((_, i) => (
-                <View key={`e-${i}`} style={s.cell} />
-              ))}
-            </View>
-          ) : (
-            <SongRow song={item} queue={tab === "liked" ? likedList : history} />
-          )
-        }
+        renderItem={({ item }: any) => (
+          <SongRow song={item} queue={tab === "liked" ? likedList : history} />
+        )}
         ListEmptyComponent={
-          <Text style={s.empty}>
-            {tab === "playlists" ? "No playlists yet." : tab === "liked" ? "Nothing liked yet." : "Nothing played yet."}
-          </Text>
+          tab === "playlists" ? null : (
+            <Text style={s.empty}>
+              {tab === "liked" ? "Nothing liked yet." : "Nothing played yet."}
+            </Text>
+          )
         }
       />
 
