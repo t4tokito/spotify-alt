@@ -82,6 +82,15 @@ export default function Profile() {
   const tabData =
     tab === "playlists" ? null : tab === "liked" ? likedList : history;
 
+  // manual 3-per-row grid (bulletproof on all RN versions)
+  const gridRows: (typeof playlists)[] = [];
+  if (tab === "playlists") {
+    playlists.forEach((p, i) => {
+      if (i % 3 === 0) gridRows.push([]);
+      gridRows[gridRows.length - 1].push(p);
+    });
+  }
+
   return (
     <View style={[s.root, { paddingTop: insets.top }]}>
       <View style={s.topBar}>
@@ -93,10 +102,8 @@ export default function Profile() {
 
       <FlatList
         key={tab}
-        data={tab === "playlists" ? playlists : tabData ?? []}
-        keyExtractor={(i: any) => (tab === "playlists" ? i.id : `t-${i.id}`)}
-        numColumns={tab === "playlists" ? 3 : 1}
-        columnWrapperStyle={tab === "playlists" ? s.gridRow : undefined}
+        data={tab === "playlists" ? gridRows : tabData ?? []}
+        keyExtractor={(i: any, idx: number) => (tab === "playlists" ? `row-${idx}` : `t-${i.id}`)}
         ListHeaderComponent={
           <View>
             <View style={s.head}>
@@ -167,20 +174,28 @@ export default function Profile() {
         }
         renderItem={({ item }: any) =>
           tab === "playlists" ? (
-            <Pressable
-              onPress={() => router.push(`/playlist/${item.id}` as any)}
-              style={s.cell}
-            >
-              {item.icon && PLAYLIST_ICONS[item.icon] ? (
-                <Image source={PLAYLIST_ICONS[item.icon]} style={s.cellImg} />
-              ) : item.songs?.[0]?.image ? (
-                <Image source={{ uri: item.songs[0].imageSmall || item.songs[0].image }} style={s.cellImg} />
-              ) : (
-                <View style={[s.cellImg, s.cellEmpty]}>
-                  <Ionicons name="musical-notes" size={28} color={C.accent} />
-                </View>
-              )}
-            </Pressable>
+            <View style={s.gridRow}>
+              {item.map((pl: any) => (
+                <Pressable
+                  key={pl.id}
+                  onPress={() => router.push(`/playlist/${pl.id}` as any)}
+                  style={s.cell}
+                >
+                  {pl.icon && PLAYLIST_ICONS[pl.icon] ? (
+                    <Image source={PLAYLIST_ICONS[pl.icon]} style={s.cellImg} />
+                  ) : pl.songs?.[0]?.image ? (
+                    <Image source={{ uri: pl.songs[0].imageSmall || pl.songs[0].image }} style={s.cellImg} />
+                  ) : (
+                    <View style={[s.cellImg, s.cellEmpty]}>
+                      <Ionicons name="musical-notes" size={28} color={C.accent} />
+                    </View>
+                  )}
+                </Pressable>
+              ))}
+              {Array.from({ length: 3 - item.length }).map((_, i) => (
+                <View key={`e-${i}`} style={s.cell} />
+              ))}
+            </View>
           ) : (
             <SongRow song={item} queue={tab === "liked" ? likedList : history} />
           )
@@ -258,7 +273,7 @@ const s = StyleSheet.create({
   tabs: { flexDirection: "row", marginTop: 12, borderTopWidth: 1, borderTopColor: "rgba(255,255,255,0.08)" },
   tab: { flex: 1, alignItems: "center", paddingVertical: 10, borderBottomWidth: 1, borderBottomColor: "transparent" },
   tabOn: { borderBottomColor: C.text },
-  gridRow: { paddingHorizontal: 2, gap: 2 },
+  gridRow: { flexDirection: "row", paddingHorizontal: 2, gap: 2 },
   cell: { width: CELL, height: CELL, padding: 1 },
   cellImg: { flex: 1, borderRadius: 4, backgroundColor: C.surface },
   cellEmpty: { alignItems: "center", justifyContent: "center" },
