@@ -9,6 +9,7 @@ import { formatTime } from "../lib/music";
 import { AddToPlaylistModal } from "../components/AddToPlaylistModal";
 import { LyricsModal } from "../components/LyricsModal";
 import { QueueModal } from "../components/QueueModal";
+import { ShareSheet } from "../components/ShareSheet";
 import { SleepModal } from "../components/SleepModal";
 import { C } from "../lib/theme";
 
@@ -21,6 +22,7 @@ export default function PlayerScreen() {
   const [queueOpen, setQueueOpen] = useState(false);
   const [lyricsOpen, setLyricsOpen] = useState(false);
   const [sleepOpen, setSleepOpen] = useState(false);
+  const [shareOpen, setShareOpen] = useState(false);
 
   if (!current) {
     return (
@@ -78,6 +80,9 @@ export default function PlayerScreen() {
           hitSlop={10}
         >
           <Ionicons name="radio-outline" size={28} color="#fff" />
+        </Pressable>
+        <Pressable onPress={() => setShareOpen(true)} hitSlop={10}>
+          <Ionicons name="share-outline" size={28} color="#fff" />
         </Pressable>
       </View>
 
@@ -147,6 +152,7 @@ export default function PlayerScreen() {
       <QueueModal visible={queueOpen} onClose={() => setQueueOpen(false)} />
       <LyricsModal visible={lyricsOpen} song={current} onClose={() => setLyricsOpen(false)} />
       <SleepModal visible={sleepOpen} onClose={() => setSleepOpen(false)} />
+      <ShareSheet visible={shareOpen} payload={{ type: "song", song: current }} onClose={() => setShareOpen(false)} />
     </LinearGradient>
   );
 }

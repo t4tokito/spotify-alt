@@ -5,6 +5,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import { getProfile, resolveUsernameToUid, type Profile } from "../../lib/usernames";
+import { findOrCreateChat } from "../../lib/chat";
 import { followUser, getFollowers, getFollowing, isFollowing, loadUserPublicPlaylists, unfollowUser } from "../../lib/cloud";
 import { useAuth } from "../../lib/auth";
 import { AVATARS } from "../../lib/avatars";
@@ -65,6 +66,17 @@ export default function UserProfile() {
   const display = profile?.username ?? decodeURIComponent(String(username ?? ""));
   const avatarSrc = profile?.photoURL ? AVATARS[profile.photoURL] : null;
   const isSelf = me?.uid === uid;
+
+  async function openChat() {
+    if (!me?.uid || !uid || isSelf) return;
+    try {
+      const chatId = await findOrCreateChat(
+        { uid: me.uid, username: myProfile?.username ?? "Me", photoURL: myProfile?.photoURL ?? null },
+        { uid, username: display, photoURL: profile?.photoURL ?? null }
+      );
+      router.push(`/chat/${chatId}` as any);
+    } catch {}
+  }
 
   async function toggleFollow() {
     if (!me?.uid || !uid || isSelf || followBusy) return;
@@ -148,6 +160,13 @@ export default function UserProfile() {
                       {following ? "Following" : "Follow"}
                     </Text>
                   </Pressable>
+                  <Pressable
+                    onPress={openChat}
+                    style={({ pressed }) => [s.followBtn, s.msgBtn, pressed && { opacity: 0.8 }]}
+                  >
+                    <Ionicons name="chatbubble-outline" size={16} color={C.text} />
+                    <Text style={s.msgText}>Message</Text>
+                  </Pressable>
                 </View>
               )}
               <View style={s.spotWrap}>
@@ -183,8 +202,10 @@ const s = StyleSheet.create({
   statNum: { color: C.text, fontSize: 17, fontWeight: "800" },
   statLabel: { color: C.textDim, fontSize: 12 },
   displayName: { color: C.text, fontSize: 15, fontWeight: "800", paddingHorizontal: 16, marginTop: 10 },
-  btnRow: { paddingHorizontal: 16, marginTop: 12 },
-  followBtn: { backgroundColor: C.accent, borderRadius: 10, paddingVertical: 10, alignItems: "center" },
+  btnRow: { flexDirection: "row", gap: 8, paddingHorizontal: 16, marginTop: 12 },
+  followBtn: { flex: 1, backgroundColor: C.accent, borderRadius: 10, paddingVertical: 10, alignItems: "center" },
+  msgBtn: { flex: 1, flexDirection: "row", backgroundColor: C.surface2, borderRadius: 10, paddingVertical: 10, alignItems: "center", justifyContent: "center", gap: 6 },
+  msgText: { color: C.text, fontWeight: "800", fontSize: 14 },
   followOff: { backgroundColor: "transparent", borderWidth: 1, borderColor: C.neutral },
   followText: { color: C.onAccent, fontWeight: "800", fontSize: 14 },
   followTextOff: { color: C.text },

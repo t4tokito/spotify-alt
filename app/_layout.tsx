@@ -37,7 +37,10 @@ function Shell({ children }: { children: React.ReactNode }) {
     );
   }
 
-  const hideChrome = pathname === "/player" || AUTH_SCREENS.includes(segments[0] as string);
+  const hideChrome =
+    pathname === "/player" ||
+    segments[0] === "chat" ||
+    AUTH_SCREENS.includes(segments[0] as string);
 
   return (
     <View style={{ flex: 1, backgroundColor: "#121212" }}>
@@ -89,6 +92,8 @@ export default function RootLayout() {
                 <Stack.Screen name="liked" />
                 <Stack.Screen name="stats" />
                 <Stack.Screen name="follows" />
+                <Stack.Screen name="messages" />
+                <Stack.Screen name="chat/[id]" />
                 <Stack.Screen name="user/[username]" />
               </Stack>
             </Shell>

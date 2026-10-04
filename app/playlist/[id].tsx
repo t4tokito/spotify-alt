@@ -12,6 +12,7 @@ import { PLAYLIST_ICONS, PLAYLIST_ICON_KEYS } from "../../lib/playlistIcons";
 import { SongRow } from "../../components/SongRow";
 import { AddSongsModal } from "../../components/AddSongsModal";
 import { ImportPlaylistModal } from "../../components/ImportPlaylistModal";
+import { ShareSheet } from "../../components/ShareSheet";
 import { C, tint } from "../../lib/theme";
 
 function totalMins(songs: { duration: number }[]): string {
@@ -54,6 +55,7 @@ export default function PlaylistDetail() {
   const [addOpen, setAddOpen] = useState(false);
   const [iconOpen, setIconOpen] = useState(false);
   const [saveOpen, setSaveOpen] = useState(false);
+  const [shareOpen, setShareOpen] = useState(false);
   const [remote, setRemote] = useState<Playlist | null>(null);
   const [remoteLoading, setRemoteLoading] = useState(false);
 
@@ -162,6 +164,13 @@ export default function PlaylistDetail() {
                   >
                     <Ionicons name="add-circle-outline" size={28} color={C.textDim} />
                   </Pressable>
+                  <Pressable
+                    onPress={() => setShareOpen(true)}
+                    hitSlop={10}
+                    style={({ pressed }) => [s.iconBtn, pressed && { opacity: 0.55 }]}
+                  >
+                    <Ionicons name="share-outline" size={26} color={C.textDim} />
+                  </Pressable>
                   <View style={{ flex: 1 }} />
                   <Pressable
                     onPress={() => {
@@ -201,6 +210,13 @@ export default function PlaylistDetail() {
       />
       {isMine && (
         <AddSongsModal visible={addOpen} playlistId={pl.id} playlistName={pl.name} onClose={() => setAddOpen(false)} />
+      )}
+      {isMine && (
+        <ShareSheet
+          visible={shareOpen}
+          payload={{ type: "playlist", playlist: { id: pl.id, ownerUid: user?.uid ?? "", name: pl.name, songCount: pl.songs.length } }}
+          onClose={() => setShareOpen(false)}
+        />
       )}
       {!isMine && (
         <ImportPlaylistModal visible={saveOpen} songs={pl.songs} sourceName={pl.name} onClose={() => setSaveOpen(false)} />
