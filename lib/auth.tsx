@@ -27,6 +27,7 @@ import {
   validateUsername,
   type Profile,
 } from "./usernames";
+import { refreshMyChatPhotos } from "./chat";
 
 type AuthContextValue = {
   user: User | null;
@@ -155,6 +156,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         if (!u) throw new Error("You must be signed in.");
         await updatePhotoDoc(u.uid, profile?.username ?? "", photo);
         setProfile((prev) => ({ ...prev, photoURL: photo }));
+        refreshMyChatPhotos(u.uid, photo).catch(() => {});
       },
       signOut: () => {
         ensureConfigured();

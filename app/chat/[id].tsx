@@ -7,7 +7,7 @@ import { useAuth } from "../../lib/auth";
 import { usePlayer } from "../../lib/player";
 import { getDoc, doc } from "firebase/firestore";
 import { db } from "../../lib/firebase";
-import { peerOf, sendText, subscribeMessages, type ChatDoc, type ChatMsg } from "../../lib/chat";
+import { peerOf, sendText, subscribeMessages, healChatPhotos, type ChatDoc, type ChatMsg } from "../../lib/chat";
 import { AVATARS } from "../../lib/avatars";
 import { C } from "../../lib/theme";
 
@@ -26,7 +26,15 @@ export default function ChatThread() {
   useEffect(() => {
     let live = true;
     getDoc(doc(db, "chats", String(id)))
-      .then((d) => live && d.exists() && setChat(d.data() as ChatDoc))
+      .then((d) => {
+        if (!live || !d.exists()) return;
+        const c = d.data() as ChatDoc;
+        setChat(c);
+        if (user?.uid) {
+          const peerUid = (c.participants ?? []).find((p) => p !== user.uid) ?? "";
+          healChatPhotos(String(id), user.uid, profile?.photoURL ?? null, peerUid).catch(() => {});
+        }
+      })
       .catch(() => {});
     const unsub = subscribeMessages(String(id), (ms) => {
       if (live) {

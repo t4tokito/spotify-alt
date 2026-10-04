@@ -3,6 +3,7 @@ import {
   doc,
   getDoc,
   getDocs,
+  limit,
   onSnapshot,
   orderBy,
   query,
@@ -10,6 +11,7 @@ import {
   setDoc,
   updateDoc,
   where,
+  writeBatch,
   type Unsubscribe,
 } from "firebase/firestore";
 import { db } from "./firebase";
@@ -163,4 +165,41 @@ export async function sendPlaylist(
 export function peerOf(chat: ChatDoc, meUid: string): { uid: string; username: string; photoURL?: string | null } {
   const uid = chat.participants.find((p) => p !== meUid) ?? meUid;
   return { uid, username: chat.names?.[uid] ?? "Unknown", photoURL: chat.photos?.[uid] ?? null };
+}
+
+/** Push my new avatar into every chat I'm in (heals stale list photos). */
+export async function refreshMyChatPhotos(uid: string, photo: string | null): Promise<void> {
+  if (noDb()) return;
+  try {
+    const chats = await getMyChats(uid);
+    if (chats.length === 0) return;
+    const batch = writeBatch(db);
+    for (const c of chats) {
+      batch.update(doc(db, "chats", c.id), { [`photos.${uid}`]: photo });
+    }
+    await batch.commit();
+  } catch {}
+}
+
+/** When a thread opens, refresh both sides' photos (mine + peer lookup). */
+export async function healChatPhotos(
+  chatId: string,
+  meUid: string,
+  mePhoto: string | null,
+  peerUid: string
+): Promise<void> {
+  if (noDb() || !peerUid) return;
+  try {
+    let peerPhoto: string | null = null;
+    try {
+      const snap = await getDocs(query(collection(db, "usernames"), where("uid", "==", peerUid), limit(1)));
+      snap.forEach((d) => {
+        peerPhoto = (d.data().photoURL as string) ?? null;
+      });
+    } catch {}
+    await updateDoc(doc(db, "chats", chatId), {
+      [`photos.${meUid}`]: mePhoto,
+      [`photos.${peerUid}`]: peerPhoto,
+    });
+  } catch {}
 }
