@@ -165,11 +165,14 @@ export default function ChatThread() {
         }}
       />
 
-      {lastMine && <Text style={s.seen}>{peerSeen ? "Seen" : "Sent"}</Text>}
-      <View style={[s.composer, { paddingBottom: Math.max(insets.bottom, 12) }]}>        <Pressable onPress={() => setShareOpen(true)} style={s.plus}>
+      {lastMine ? (
+        <Text style={s.seen}>{peerSeen ? "Seen" : "Sent"}</Text>
+      ) : null}
+      <View style={[s.composer, { paddingBottom: Math.max(insets.bottom, 12) }]}>
+        <Pressable onPress={() => setShareOpen(true)} style={s.plus}>
           <Ionicons name="add" size={22} color={C.onAccent} />
         </Pressable>
-        <View style={{ flex: 1 }}>
+        <View style={s.composerInput}>
           <TextInput
             value={text}
             onChangeText={setText}
@@ -231,6 +234,7 @@ const s = StyleSheet.create({
   empty: { color: C.textFaint, textAlign: "center", marginTop: 40 },
   seen: { color: C.textFaint, fontSize: 11, textAlign: "right", paddingRight: 16, paddingBottom: 2 },
   composer: { flexDirection: "row", alignItems: "center", gap: 8, paddingHorizontal: 12, paddingTop: 8 },
+  composerInput: { flex: 1 },
   plus: { width: 44, height: 44, borderRadius: 22, backgroundColor: C.accent, alignItems: "center", justifyContent: "center" },
   input: { flex: 1, backgroundColor: C.surface2, borderRadius: 22, paddingHorizontal: 16, paddingVertical: 11, color: C.text, fontSize: 15 },
   sendError: { color: C.danger, fontSize: 12, marginTop: 4, marginLeft: 8 },
