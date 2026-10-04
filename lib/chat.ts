@@ -50,8 +50,15 @@ export async function findOrCreateChat(
 ): Promise<string> {
   const id = directChatId(me.uid, peer.uid);
   const ref = doc(db, "chats", id);
-  const snap = await getDoc(ref);
-  if (!snap.exists()) {
+  // NOTE: getDoc on a not-yet-existing doc is denied by rules
+  // (no resource to check against), so treat any read failure as "missing".
+  let exists = false;
+  try {
+    exists = (await getDoc(ref)).exists();
+  } catch {
+    exists = false;
+  }
+  if (!exists) {
     await setDoc(ref, {
       participants: [me.uid, peer.uid].sort(),
       names: { [me.uid]: me.username, [peer.uid]: peer.username },

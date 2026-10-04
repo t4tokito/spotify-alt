@@ -45,7 +45,9 @@ export default function Messages() {
       setQ("");
       setPeople([]);
       router.push(`/chat/${chatId}` as any);
-    } catch {}
+    } catch (e) {
+      console.warn("open chat failed:", e);
+    }
   }
 
   useFocusEffect(

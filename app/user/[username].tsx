@@ -75,7 +75,9 @@ export default function UserProfile() {
         { uid, username: display, photoURL: profile?.photoURL ?? null }
       );
       router.push(`/chat/${chatId}` as any);
-    } catch {}
+    } catch (e) {
+      console.warn("open chat failed:", e);
+    }
   }
 
   async function toggleFollow() {
