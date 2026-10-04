@@ -1,19 +1,52 @@
 import { useCallback, useState } from "react";
-import { ActivityIndicator, FlatList, Image, Pressable, StyleSheet, Text, View } from "react-native";
+import { ActivityIndicator, FlatList, Image, Pressable, StyleSheet, Text, TextInput, View } from "react-native";
 import { useFocusEffect, useRouter } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { useAuth } from "../lib/auth";
-import { peerOf, subscribeMyChats, type ChatDoc } from "../lib/chat";
+import { findOrCreateChat, peerOf, subscribeMyChats, type ChatDoc } from "../lib/chat";
+import { FoundUser, searchUsernames } from "../lib/usernames";
 import { AVATARS } from "../lib/avatars";
 import { C, tint } from "../lib/theme";
 
 export default function Messages() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
-  const { user } = useAuth();
+  const { user, profile } = useAuth();
   const [chats, setChats] = useState<(ChatDoc & { id: string })[]>([]);
   const [loading, setLoading] = useState(true);
+  const [q, setQ] = useState("");
+  const [people, setPeople] = useState<FoundUser[]>([]);
+  const [searching, setSearching] = useState(false);
+
+  async function doSearch(query: string) {
+    setQ(query);
+    if (!query.trim()) {
+      setPeople([]);
+      return;
+    }
+    setSearching(true);
+    try {
+      const res = await searchUsernames(query, 12);
+      setPeople(res.filter((p) => p.uid !== user?.uid));
+    } catch {
+      setPeople([]);
+    }
+    setSearching(false);
+  }
+
+  async function openChatWith(p: FoundUser) {
+    if (!user) return;
+    try {
+      const chatId = await findOrCreateChat(
+        { uid: user.uid, username: profile?.username ?? "Me", photoURL: profile?.photoURL ?? null },
+        { uid: p.uid, username: p.username, photoURL: p.photoURL ?? null }
+      );
+      setQ("");
+      setPeople([]);
+      router.push(`/chat/${chatId}` as any);
+    } catch {}
+  }
 
   useFocusEffect(
     useCallback(() => {
@@ -33,7 +66,48 @@ export default function Messages() {
   return (
     <View style={[s.root, { paddingTop: insets.top }]}>
       <Text style={s.title}>Messages</Text>
-      {loading ? (
+      <View style={s.searchWrap}>
+        <Ionicons name="search-outline" size={18} color={C.neutral} />
+        <TextInput
+          value={q}
+          onChangeText={doSearch}
+          placeholder="Search people to message…"
+          placeholderTextColor="#777"
+          style={s.search}
+          autoCorrect={false}
+          autoCapitalize="none"
+        />
+        {searching && <ActivityIndicator color={C.accent} size="small" />}
+      </View>
+      {q.trim() ? (
+        <FlatList
+          data={people}
+          keyExtractor={(p) => p.uid}
+          keyboardShouldPersistTaps="handled"
+          renderItem={({ item }) => {
+            const photo = item.photoURL ? AVATARS[item.photoURL] : null;
+            return (
+              <Pressable
+                onPress={() => openChatWith(item)}
+                style={({ pressed }) => [s.row, pressed && { opacity: 0.6 }]}
+              >
+                {photo ? (
+                  <Image source={photo} style={s.avatarImg} />
+                ) : (
+                  <View style={s.avatar}>
+                    <Text style={s.avatarText}>{(item.username[0] ?? "?").toUpperCase()}</Text>
+                  </View>
+                )}
+                <Text style={s.name}>{item.username}</Text>
+                <Ionicons name="chatbubble-outline" size={20} color={C.accent} />
+              </Pressable>
+            );
+          }}
+          ListEmptyComponent={
+            !searching ? <Text style={s.emptyNote}>No users found.</Text> : null
+          }
+        />
+      ) : loading ? (
         <ActivityIndicator color={C.accent} size="large" style={{ marginTop: 40 }} />
       ) : (
         <FlatList
@@ -81,7 +155,14 @@ export default function Messages() {
 
 const s = StyleSheet.create({
   root: { flex: 1, backgroundColor: C.bg },
-  title: { color: C.text, fontSize: 28, fontWeight: "900", letterSpacing: -0.6, paddingHorizontal: 16, marginBottom: 8 },
+  title: { color: C.text, fontSize: 28, fontWeight: "900", letterSpacing: -0.6, paddingHorizontal: 16, marginBottom: 10 },
+  searchWrap: {
+    flexDirection: "row", alignItems: "center", gap: 8,
+    backgroundColor: C.surface2, borderRadius: 12, paddingHorizontal: 12,
+    marginHorizontal: 16, marginBottom: 6,
+  },
+  search: { flex: 1, paddingVertical: 12, color: C.text, fontSize: 15 },
+  emptyNote: { color: C.textFaint, textAlign: "center", marginTop: 30 },
   row: { flexDirection: "row", alignItems: "center", paddingVertical: 9, paddingHorizontal: 16, gap: 12 },
   avatar: {
     width: 52, height: 52, borderRadius: 26,
