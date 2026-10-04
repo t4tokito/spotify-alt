@@ -1,5 +1,6 @@
 import React, { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
-import { useAudioPlayer, useAudioPlayerStatus } from "expo-audio";
+import { Platform } from "react-native";
+import { useAudioPlayer, useAudioPlayerStatus, setAudioModeAsync, requestNotificationPermissionsAsync } from "expo-audio";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import type { Song } from "./music";
 import { getSuggestions } from "./music";
@@ -182,12 +183,47 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
     if (uidRef.current) bumpGlobalPlay(song).catch(() => {});
   }, []);
 
+  // audio session: background playback + lock screen association
+  useEffect(() => {
+    (async () => {
+      try {
+        await setAudioModeAsync({
+          playsInSilentMode: true,
+          shouldPlayInBackground: true,
+          interruptionMode: "doNotMix",
+        });
+      } catch {}
+      try {
+        if (Platform.OS === "android") await requestNotificationPermissionsAsync();
+      } catch {}
+    })();
+  }, []);
+
   // always push volume to the native player (never leave it quiet)
   useEffect(() => {
     try {
       player.volume = volume;
     } catch {}
   }, [player, volume]);
+
+  // notification shade / lock screen: song name, artist, artwork + controls
+  const syncLockScreen = useCallback(
+    (song: Song | null) => {
+      try {
+        if (!song) {
+          player.clearLockScreenControls();
+          return;
+        }
+        player.setActiveForLockScreen(true, {
+          title: song.name,
+          artist: song.artists || "Tokito Music",
+          albumTitle: song.albumName || "Tokito Music",
+          artworkUrl: song.image || undefined,
+        });
+      } catch {}
+    },
+    [player]
+  );
 
   const setVolume = useCallback((v: number) => {
     const clamped = Math.min(1, Math.max(0, v));
@@ -214,6 +250,7 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
       setOrder(ord);
       currentRef.current = song;
       setCurrent(song);
+      syncLockScreen(song);
       try {
         player.replace({ uri: song.url });
         player.volume = volumeRef.current;
@@ -222,7 +259,7 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
       setHistory((h) => [song, ...h.filter((x) => x.id !== song.id)].slice(0, 50));
       recordPlay(song);
     },
-    [player, recordPlay]
+    [player, recordPlay, syncLockScreen]
   );
 
   const toggle = useCallback(() => {
@@ -248,6 +285,7 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
       if (!nxt) return;
       currentRef.current = nxt;
       setCurrent(nxt);
+      syncLockScreen(nxt);
       try {
         player.replace({ uri: nxt.url });
         player.volume = volumeRef.current;
@@ -256,7 +294,7 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
       setHistory((h) => [nxt, ...h.filter((x) => x.id !== nxt.id)].slice(0, 50));
       recordPlay(nxt);
     },
-    [player, recordPlay]
+    [player, recordPlay, syncLockScreen]
   );
 
   const stepRef = useRef(step);
@@ -299,6 +337,7 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
     (song: Song) => {
       currentRef.current = song;
       setCurrent(song);
+      syncLockScreen(song);
       try {
         player.replace({ uri: song.url });
         player.volume = volumeRef.current;
@@ -307,7 +346,7 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
       setHistory((h) => [song, ...h.filter((x) => x.id !== song.id)].slice(0, 50));
       recordPlay(song);
     },
-    [player, recordPlay]
+    [player, recordPlay, syncLockScreen]
   );
 
   const removeFromQueue = useCallback((id: string) => {
