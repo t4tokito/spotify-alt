@@ -5,7 +5,6 @@ import {
   getDocs,
   limit,
   onSnapshot,
-  orderBy,
   query,
   serverTimestamp,
   setDoc,
@@ -92,9 +91,14 @@ export function subscribeMyChats(uid: string, cb: (chats: (ChatDoc & { id: strin
   );
 }
 
-export function subscribeMessages(chatId: string, cb: (msgs: ChatMsg[]) => void): Unsubscribe {
+export function subscribeMessages(
+  chatId: string,
+  uid: string,
+  cb: (msgs: ChatMsg[]) => void,
+  onError?: (e: any) => void
+): Unsubscribe {
   return onSnapshot(
-    query(collection(db, "chats", chatId, "messages"), orderBy("at", "asc")),
+    query(collection(db, "chats", chatId, "messages"), where("participants", "array-contains", uid)),
     (snap) => {
       const out: ChatMsg[] = [];
       snap.forEach((d) => {
@@ -110,15 +114,20 @@ export function subscribeMessages(chatId: string, cb: (msgs: ChatMsg[]) => void)
           at: typeof m.at === "number" ? m.at : 0,
         });
       });
-      cb(out);
+      cb(out.sort((a, b) => a.at - b.at));
     },
-    () => {}
+    (e) => onError?.(e)
   );
 }
 
-async function pushMessage(chatId: string, msg: Record<string, unknown>, preview: string): Promise<void> {
+async function pushMessage(
+  chatId: string,
+  participants: string[],
+  msg: Record<string, unknown>,
+  preview: string
+): Promise<void> {
   const ref = doc(collection(db, "chats", chatId, "messages"));
-  await setDoc(ref, { ...msg, at: Date.now() });
+  await setDoc(ref, { ...msg, participants, at: Date.now() });
   await updateDoc(doc(db, "chats", chatId), { lastText: preview.slice(0, 80), updatedAt: Date.now() }).catch(
     () => {}
   );
@@ -126,6 +135,7 @@ async function pushMessage(chatId: string, msg: Record<string, unknown>, preview
 
 export async function sendText(
   chatId: string,
+  participants: string[],
   from: { uid: string; username: string },
   text: string
 ): Promise<void> {
@@ -133,6 +143,7 @@ export async function sendText(
   if (!t) return;
   await pushMessage(
     chatId,
+    participants,
     { from: from.uid, fromName: from.username, kind: "text", text: t, createdAt: serverTimestamp() },
     t
   );
@@ -140,11 +151,13 @@ export async function sendText(
 
 export async function sendSong(
   chatId: string,
+  participants: string[],
   from: { uid: string; username: string },
   song: Song
 ): Promise<void> {
   await pushMessage(
     chatId,
+    participants,
     { from: from.uid, fromName: from.username, kind: "song", song: JSON.parse(JSON.stringify(song)), createdAt: serverTimestamp() },
     `Song: ${song.name}`
   );
@@ -152,11 +165,13 @@ export async function sendSong(
 
 export async function sendPlaylist(
   chatId: string,
+  participants: string[],
   from: { uid: string; username: string },
   pl: { id: string; ownerUid: string; name: string; songCount: number }
 ): Promise<void> {
   await pushMessage(
     chatId,
+    participants,
     { from: from.uid, fromName: from.username, kind: "playlist", playlist: pl, createdAt: serverTimestamp() },
     `Playlist: ${pl.name}`
   );

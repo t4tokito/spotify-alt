@@ -40,11 +40,13 @@ export function ShareSheet({
 
   async function send(chatId: string) {
     if (!payload || !user) return;
+    const chat = chats.find((c) => c.id === chatId);
+    const participants = chat?.participants ?? [user.uid];
     try {
       if (payload.type === "song") {
-        await sendSong(chatId, { uid: user.uid, username: profile?.username ?? "Me" }, payload.song);
+        await sendSong(chatId, participants, { uid: user.uid, username: profile?.username ?? "Me" }, payload.song);
       } else {
-        await sendPlaylist(chatId, { uid: user.uid, username: profile?.username ?? "Me" }, payload.playlist);
+        await sendPlaylist(chatId, participants, { uid: user.uid, username: profile?.username ?? "Me" }, payload.playlist);
       }
       setSentId(chatId);
       setTimeout(() => {

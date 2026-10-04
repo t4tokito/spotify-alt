@@ -37,16 +37,21 @@ export default function ChatThread() {
         }
       })
       .catch(() => {});
-    const unsub = subscribeMessages(String(id), (ms) => {
-      if (live) {
-        setMsgs(ms);
-        setTimeout(() => {
-          try {
-            listRef.current?.scrollToEnd({ animated: true });
-          } catch {}
-        }, 100);
-      }
-    });
+    const unsub = subscribeMessages(
+      String(id),
+      user?.uid ?? "",
+      (ms) => {
+        if (live) {
+          setMsgs(ms);
+          setTimeout(() => {
+            try {
+              listRef.current?.scrollToEnd({ animated: true });
+            } catch {}
+          }, 100);
+        }
+      },
+      (e) => console.warn("messages listen failed:", e)
+    );
     return () => {
       live = false;
       unsub();
@@ -61,7 +66,12 @@ export default function ChatThread() {
     setSending(true);
     setSendError("");
     try {
-      await sendText(String(id), { uid: user.uid, username: profile?.username ?? "Me" }, text);
+      await sendText(
+        String(id),
+        chat?.participants ?? [user.uid],
+        { uid: user.uid, username: profile?.username ?? "Me" },
+        text
+      );
       setText("");
     } catch (e: any) {
       console.warn("send message failed:", e);
