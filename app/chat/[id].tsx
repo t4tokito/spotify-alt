@@ -1,13 +1,12 @@
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { ActivityIndicator, FlatList, Image, Pressable, StyleSheet, Text, TextInput, View } from "react-native";
+import { useFocusEffect } from "expo-router";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { useAuth } from "../../lib/auth";
 import { usePlayer } from "../../lib/player";
-import { getDoc, doc } from "firebase/firestore";
-import { db } from "../../lib/firebase";
-import { peerOf, sendText, subscribeMessages, healChatPhotos, type ChatDoc, type ChatMsg } from "../../lib/chat";
+import { peerOf, sendText, subscribeChat, subscribeMessages, healChatPhotos, markRead, type ChatDoc, type ChatMsg } from "../../lib/chat";
 import { ChatShareModal } from "../../components/ChatShareModal";
 import { AVATARS } from "../../lib/avatars";
 import { C } from "../../lib/theme";
@@ -28,18 +27,17 @@ export default function ChatThread() {
 
   useEffect(() => {
     let live = true;
-    getDoc(doc(db, "chats", String(id)))
-      .then((d) => {
-        if (!live || !d.exists()) return;
-        const c = d.data() as ChatDoc;
-        setChat(c);
-        if (user?.uid) {
-          const peerUid = (c.participants ?? []).find((p) => p !== user.uid) ?? "";
-          healChatPhotos(String(id), user.uid, profile?.photoURL ?? null, peerUid).catch(() => {});
-        }
-      })
-      .catch(() => {});
-    const unsub = subscribeMessages(
+    const healed = { current: false };
+    const unsubChat = subscribeChat(String(id), (c) => {
+      if (!live || !c) return;
+      setChat(c);
+      if (!healed.current && user?.uid) {
+        healed.current = true;
+        const peerUid = (c.participants ?? []).find((p) => p !== user.uid) ?? "";
+        healChatPhotos(String(id), user.uid, profile?.photoURL ?? null, peerUid).catch(() => {});
+      }
+    });
+    const unsubMsgs = subscribeMessages(
       String(id),
       user?.uid ?? "",
       (ms) => {
@@ -56,12 +54,26 @@ export default function ChatThread() {
     );
     return () => {
       live = false;
-      unsub();
+      unsubChat();
+      unsubMsgs();
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id]);
+
+  // mark read while I'm looking at the thread (clears badges, feeds Seen ticks)
+  useFocusEffect(
+    useCallback(() => {
+      if (!user?.uid) return;
+      markRead(String(id), user.uid);
+      const t = setInterval(() => markRead(String(id), user?.uid ?? ""), 5000);
+      return () => clearInterval(t);
+    }, [id, user?.uid])
+  );
 
   const peer = chat ? peerOf(chat, user?.uid ?? "") : null;
   const photo = peer?.photoURL ? AVATARS[peer.photoURL] : null;
+  const lastMine = msgs.length > 0 && msgs[msgs.length - 1].from === user?.uid ? msgs[msgs.length - 1] : null;
+  const peerSeen = lastMine ? (chat?.lastRead?.[peer?.uid ?? ""] ?? 0) >= lastMine.at : false;
 
   async function send() {
     if (!text.trim() || sending || !user) return;
@@ -153,8 +165,8 @@ export default function ChatThread() {
         }}
       />
 
-      <View style={[s.composer, { paddingBottom: Math.max(insets.bottom, 12) }]}>
-        <Pressable onPress={() => setShareOpen(true)} style={s.plus}>
+      {lastMine && <Text style={s.seen}>{peerSeen ? "Seen" : "Sent"}</Text>}
+      <View style={[s.composer, { paddingBottom: Math.max(insets.bottom, 12) }]}>        <Pressable onPress={() => setShareOpen(true)} style={s.plus}>
           <Ionicons name="add" size={22} color={C.onAccent} />
         </Pressable>
         <View style={{ flex: 1 }}>
@@ -217,6 +229,7 @@ const s = StyleSheet.create({
   tapRow: { flexDirection: "row", alignItems: "center", gap: 4, marginTop: 4 },
   tap: { color: C.accent, fontSize: 12, fontWeight: "700" },
   empty: { color: C.textFaint, textAlign: "center", marginTop: 40 },
+  seen: { color: C.textFaint, fontSize: 11, textAlign: "right", paddingRight: 16, paddingBottom: 2 },
   composer: { flexDirection: "row", alignItems: "center", gap: 8, paddingHorizontal: 12, paddingTop: 8 },
   plus: { width: 44, height: 44, borderRadius: 22, backgroundColor: C.accent, alignItems: "center", justifyContent: "center" },
   input: { flex: 1, backgroundColor: C.surface2, borderRadius: 22, paddingHorizontal: 16, paddingVertical: 11, color: C.text, fontSize: 15 },

@@ -3,6 +3,7 @@ import {
   doc,
   getDoc,
   getDocs,
+  increment,
   limit,
   onSnapshot,
   query,
@@ -22,6 +23,8 @@ export type ChatDoc = {
   photos: Record<string, string | null>;
   lastText: string;
   updatedAt: number;
+  unread?: Record<string, number>;
+  lastRead?: Record<string, number>;
 };
 
 export type ChatMsg =
@@ -127,8 +130,32 @@ async function pushMessage(
   preview: string
 ): Promise<void> {
   const ref = doc(collection(db, "chats", chatId, "messages"));
+  const fromUid = msg.from as string;
   await setDoc(ref, { ...msg, participants, at: Date.now() });
-  await updateDoc(doc(db, "chats", chatId), { lastText: preview.slice(0, 80), updatedAt: Date.now() }).catch(
+  const bump: Record<string, unknown> = {
+    lastText: preview.slice(0, 80),
+    updatedAt: Date.now(),
+  };
+  for (const p of participants) {
+    if (p !== fromUid) bump[`unread.${p}`] = increment(1);
+  }
+  await updateDoc(doc(db, "chats", chatId), bump).catch(() => {});
+}
+
+/** Mark thread as read for me (clears my badge). */
+export async function markRead(chatId: string, uid: string): Promise<void> {
+  if (noDb()) return;
+  await updateDoc(doc(db, "chats", chatId), {
+    [`unread.${uid}`]: 0,
+    [`lastRead.${uid}`]: Date.now(),
+  }).catch(() => {});
+}
+
+/** Live single chat doc (for Seen ticks + fresh names/photos). */
+export function subscribeChat(chatId: string, cb: (chat: ChatDoc | null) => void): Unsubscribe {
+  return onSnapshot(
+    doc(db, "chats", chatId),
+    (d) => cb(d.exists() ? (d.data() as ChatDoc) : null),
     () => {}
   );
 }

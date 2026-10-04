@@ -118,6 +118,7 @@ export default function Messages() {
           renderItem={({ item }) => {
             const peer = peerOf(item, user?.uid ?? "");
             const photo = peer.photoURL ? AVATARS[peer.photoURL] : null;
+            const unread = item.unread?.[user?.uid ?? ""] ?? 0;
             return (
               <Pressable
                 onPress={() => router.push(`/chat/${item.id}` as any)}
@@ -131,12 +132,18 @@ export default function Messages() {
                   </View>
                 )}
                 <View style={s.mid}>
-                  <Text style={s.name}>{peer.username}</Text>
-                  <Text numberOfLines={1} style={s.preview}>
+                  <Text style={[s.name, unread > 0 && s.nameNew]}>{peer.username}</Text>
+                  <Text numberOfLines={1} style={[s.preview, unread > 0 && s.previewNew]}>
                     {item.lastText || "Say hi!"}
                   </Text>
                 </View>
-                <Ionicons name="chevron-forward" size={20} color={C.neutral} />
+                {unread > 0 ? (
+                  <View style={s.badge}>
+                    <Text style={s.badgeText}>{unread > 99 ? "99+" : unread}</Text>
+                  </View>
+                ) : (
+                  <Ionicons name="chevron-forward" size={20} color={C.neutral} />
+                )}
               </Pressable>
             );
           }}
@@ -174,7 +181,14 @@ const s = StyleSheet.create({
   avatarImg: { width: 52, height: 52, borderRadius: 26, backgroundColor: C.surface2 },
   mid: { flex: 1 },
   name: { color: C.text, fontSize: 16, fontWeight: "700", letterSpacing: -0.2 },
+  nameNew: { fontWeight: "900" },
   preview: { color: C.textDim, fontSize: 13, marginTop: 2 },
+  previewNew: { color: C.text, fontWeight: "600" },
+  badge: {
+    minWidth: 22, height: 22, borderRadius: 11, paddingHorizontal: 6,
+    backgroundColor: C.accent, alignItems: "center", justifyContent: "center",
+  },
+  badgeText: { color: C.onAccent, fontSize: 12, fontWeight: "800" },
   emptyWrap: { alignItems: "center", marginTop: 60, gap: 8, paddingHorizontal: 32 },
   emptyTile: {
     width: 64, height: 64, borderRadius: 32,
