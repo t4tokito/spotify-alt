@@ -21,6 +21,7 @@ export default function ChatThread() {
   const [msgs, setMsgs] = useState<ChatMsg[]>([]);
   const [text, setText] = useState("");
   const [sending, setSending] = useState(false);
+  const [sendError, setSendError] = useState("");
   const listRef = useRef<FlatList>(null);
 
   useEffect(() => {
@@ -58,10 +59,14 @@ export default function ChatThread() {
   async function send() {
     if (!text.trim() || sending || !user) return;
     setSending(true);
+    setSendError("");
     try {
       await sendText(String(id), { uid: user.uid, username: profile?.username ?? "Me" }, text);
       setText("");
-    } catch {}
+    } catch (e: any) {
+      console.warn("send message failed:", e);
+      setSendError(e?.code === "permission-denied" ? "Not allowed — check Firestore rules." : "Send failed. Try again.");
+    }
     setSending(false);
   }
 
@@ -137,15 +142,18 @@ export default function ChatThread() {
       />
 
       <View style={[s.composer, { paddingBottom: Math.max(insets.bottom, 12) }]}>
-        <TextInput
-          value={text}
-          onChangeText={setText}
-          placeholder="Message…"
-          placeholderTextColor="#777"
-          style={s.input}
-          onSubmitEditing={send}
-          returnKeyType="send"
-        />
+        <View style={{ flex: 1 }}>
+          <TextInput
+            value={text}
+            onChangeText={setText}
+            placeholder="Message…"
+            placeholderTextColor="#777"
+            style={s.input}
+            onSubmitEditing={send}
+            returnKeyType="send"
+          />
+          {!!sendError && <Text style={s.sendError}>{sendError}</Text>}
+        </View>
         <Pressable onPress={send} disabled={sending || !text.trim()} style={[s.send, (!text.trim() || sending) && s.sendOff]}>
           <Ionicons name="send" size={18} color={C.onAccent} />
         </Pressable>
@@ -187,6 +195,7 @@ const s = StyleSheet.create({
   empty: { color: C.textFaint, textAlign: "center", marginTop: 40 },
   composer: { flexDirection: "row", alignItems: "center", gap: 8, paddingHorizontal: 12, paddingTop: 8 },
   input: { flex: 1, backgroundColor: C.surface2, borderRadius: 22, paddingHorizontal: 16, paddingVertical: 11, color: C.text, fontSize: 15 },
+  sendError: { color: C.danger, fontSize: 12, marginTop: 4, marginLeft: 8 },
   send: { width: 44, height: 44, borderRadius: 22, backgroundColor: C.accent, alignItems: "center", justifyContent: "center" },
   sendOff: { opacity: 0.4 },
 });
