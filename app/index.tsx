@@ -4,6 +4,7 @@ import { LinearGradient } from "expo-linear-gradient";
 import { Ionicons } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { HOME_SECTIONS, Song, getInstagramTrending, searchSongs } from "../lib/music";
+import { getGlobalTrending } from "../lib/cloud";
 import { usePlayer } from "../lib/player";
 import { useFocusEffect } from "expo-router";
 import { SongRow } from "../components/SongRow";
@@ -28,7 +29,8 @@ export default function Home() {
 
   async function load() {
     try {
-      const [insta, ...rest] = await Promise.all([
+      const [trending, insta, ...rest] = await Promise.all([
+        getGlobalTrending(12).catch(() => [] as { song: Song; count: number }[]),
         getInstagramTrending(15).then((ss) => shuffle(ss).slice(0, 12)),
         ...HOME_SECTIONS.map(async (sec) => ({
           title: sec.title,
@@ -37,16 +39,18 @@ export default function Home() {
       ]);
       // same song in two sections looks stale — keep first occurrence only
       const seen = new Set<string>();
-      const all = [{ title: "Instagram Trending", icon: "flame", color: C.trending, songs: insta }, ...rest].map(
-        (sec) => ({
-          ...sec,
-          songs: sec.songs.filter((s) => {
-            if (seen.has(s.id)) return false;
-            seen.add(s.id);
-            return true;
-          }),
-        })
-      );
+      const all = [
+        { title: "Trending", icon: "trending-up", color: C.accent, songs: shuffle(trending.map((t) => t.song)).slice(0, 10) },
+        { title: "Instagram Trending", icon: "flame", color: C.trending, songs: insta },
+        ...rest,
+      ].map((sec) => ({
+        ...sec,
+        songs: sec.songs.filter((s) => {
+          if (seen.has(s.id)) return false;
+          seen.add(s.id);
+          return true;
+        }),
+      }));
       setSections(all.filter((r) => r.songs.length > 0));
     } catch {}
     setLoading(false);

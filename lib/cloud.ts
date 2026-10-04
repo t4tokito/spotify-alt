@@ -1,4 +1,4 @@
-import { collection, deleteDoc, doc, getDoc, getDocs, query, setDoc, where, writeBatch } from "firebase/firestore";
+import { collection, deleteDoc, doc, getDoc, getDocs, increment, limit, orderBy, query, setDoc, where, writeBatch } from "firebase/firestore";
 import { db } from "./firebase";
 import type { Song } from "./music";
 import type { Playlist } from "./playlists";
@@ -106,6 +106,28 @@ export async function loadPublicPlaylist(ownerUid: string, id: string): Promise<
   if (!snap.exists()) return null;
   const pl = snap.data() as Playlist;
   return pl.visibility === "public" ? pl : null;
+}
+
+// ---------- global trending (play counts across the whole app) ----------
+
+export async function bumpGlobalPlay(song: Song): Promise<void> {
+  if (noDb()) return;
+  await setDoc(
+    doc(db, "stats_global", song.id),
+    { count: increment(1), song: clean(song), last: Date.now() },
+    { merge: true }
+  ).catch(() => {});
+}
+
+export async function getGlobalTrending(limitCount = 12): Promise<{ song: Song; count: number }[]> {
+  if (noDb()) return [];
+  const snap = await getDocs(query(collection(db, "stats_global"), orderBy("count", "desc"), limit(limitCount)));
+  const out: { song: Song; count: number }[] = [];
+  snap.forEach((d) => {
+    const data = d.data() as any;
+    if (data.song?.url) out.push({ song: data.song as Song, count: data.count ?? 0 });
+  });
+  return out;
 }
 
 // ---------- follow (insta-style) ----------

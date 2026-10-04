@@ -4,7 +4,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import type { Song } from "./music";
 import { getSuggestions } from "./music";
 import { useAuth } from "./auth";
-import { likeCloud, loadCloudHistory, loadCloudLiked, loadCloudStats, saveCloudHistory, saveCloudStats, unlikeCloud } from "./cloud";
+import { likeCloud, loadCloudHistory, loadCloudLiked, loadCloudStats, saveCloudHistory, saveCloudStats, unlikeCloud, bumpGlobalPlay } from "./cloud";
 
 export type RepeatMode = "off" | "all" | "one";
 
@@ -73,6 +73,8 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
   statusRef.current = status;
   const cloudReady = useRef(false);
   const wasLoggedIn = useRef(false);
+  const uidRef = useRef<string | null>(null);
+  uidRef.current = uid;
   const likedRef = useRef(liked);
   likedRef.current = liked;
   const historyRef = useRef(history);
@@ -177,6 +179,7 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
       ...prev,
       [song.id]: { n: (prev[song.id]?.n ?? 0) + 1, last: Date.now(), song },
     }));
+    if (uidRef.current) bumpGlobalPlay(song).catch(() => {});
   }, []);
 
   // always push volume to the native player (never leave it quiet)

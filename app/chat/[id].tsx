@@ -8,6 +8,7 @@ import { usePlayer } from "../../lib/player";
 import { getDoc, doc } from "firebase/firestore";
 import { db } from "../../lib/firebase";
 import { peerOf, sendText, subscribeMessages, healChatPhotos, type ChatDoc, type ChatMsg } from "../../lib/chat";
+import { ChatShareModal } from "../../components/ChatShareModal";
 import { AVATARS } from "../../lib/avatars";
 import { C } from "../../lib/theme";
 
@@ -22,6 +23,7 @@ export default function ChatThread() {
   const [text, setText] = useState("");
   const [sending, setSending] = useState(false);
   const [sendError, setSendError] = useState("");
+  const [shareOpen, setShareOpen] = useState(false);
   const listRef = useRef<FlatList>(null);
 
   useEffect(() => {
@@ -152,6 +154,9 @@ export default function ChatThread() {
       />
 
       <View style={[s.composer, { paddingBottom: Math.max(insets.bottom, 12) }]}>
+        <Pressable onPress={() => setShareOpen(true)} style={s.plus}>
+          <Ionicons name="add" size={22} color={C.onAccent} />
+        </Pressable>
         <View style={{ flex: 1 }}>
           <TextInput
             value={text}
@@ -168,6 +173,15 @@ export default function ChatThread() {
           <Ionicons name="send" size={18} color={C.onAccent} />
         </Pressable>
       </View>
+      {user && (
+        <ChatShareModal
+          visible={shareOpen}
+          chatId={String(id)}
+          participants={chat?.participants ?? [user.uid]}
+          from={{ uid: user.uid, username: profile?.username ?? "Me" }}
+          onClose={() => setShareOpen(false)}
+        />
+      )}
     </View>
   );
 }
@@ -204,6 +218,7 @@ const s = StyleSheet.create({
   tap: { color: C.accent, fontSize: 12, fontWeight: "700" },
   empty: { color: C.textFaint, textAlign: "center", marginTop: 40 },
   composer: { flexDirection: "row", alignItems: "center", gap: 8, paddingHorizontal: 12, paddingTop: 8 },
+  plus: { width: 44, height: 44, borderRadius: 22, backgroundColor: C.accent, alignItems: "center", justifyContent: "center" },
   input: { flex: 1, backgroundColor: C.surface2, borderRadius: 22, paddingHorizontal: 16, paddingVertical: 11, color: C.text, fontSize: 15 },
   sendError: { color: C.danger, fontSize: 12, marginTop: 4, marginLeft: 8 },
   send: { width: 44, height: 44, borderRadius: 22, backgroundColor: C.accent, alignItems: "center", justifyContent: "center" },
