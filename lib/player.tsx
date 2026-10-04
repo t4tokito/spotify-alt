@@ -1,5 +1,6 @@
 import React, { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
 import { Platform } from "react-native";
+import Constants from "expo-constants";
 import { useAudioPlayer, useAudioPlayerStatus, setAudioModeAsync, requestNotificationPermissionsAsync } from "expo-audio";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import type { Song } from "./music";
@@ -206,10 +207,13 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
     } catch {}
   }, [player, volume]);
 
-  // notification shade / lock screen: song name, artist, artwork + controls
+  // notification shade / lock screen: song name, artist, artwork + controls.
+  // NOTE: the playback service only exists in real builds (config plugin).
+  // Expo Go has no such service, so skip there to avoid noisy native errors.
   const syncLockScreen = useCallback(
     (song: Song | null) => {
       try {
+        if (Constants.appOwnership === "expo") return;
         if (!song) {
           player.clearLockScreenControls();
           return;
