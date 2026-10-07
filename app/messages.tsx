@@ -7,7 +7,49 @@ import { useAuth } from "../lib/auth";
 import { findOrCreateChat, peerOf, subscribeMyChats, type ChatDoc } from "../lib/chat";
 import { FoundUser, searchUsernames } from "../lib/usernames";
 import { AVATARS } from "../lib/avatars";
+import { usePeerPhoto } from "../lib/usePeerPhoto";
 import { C, tint } from "../lib/theme";
+
+function ChatRow({ chatId, peerUid, peerName, mappingPhoto, lastText, unread, meUid }: {
+  chatId: string;
+  peerUid: string;
+  peerName: string;
+  mappingPhoto?: string | null;
+  lastText: string;
+  unread: number;
+  meUid: string;
+}) {
+  const router = useRouter();
+  const photoKey = usePeerPhoto(peerUid, mappingPhoto);
+  const photo = photoKey ? AVATARS[photoKey] : null;
+  return (
+    <Pressable
+      onPress={() => router.push(`/chat/${chatId}` as any)}
+      style={({ pressed }) => [s.row, pressed && { opacity: 0.6 }]}
+    >
+      {photo ? (
+        <Image source={photo} style={s.avatarImg} />
+      ) : (
+        <View style={s.avatar}>
+          <Text style={s.avatarText}>{(peerName[0] ?? "?").toUpperCase()}</Text>
+        </View>
+      )}
+      <View style={s.mid}>
+        <Text style={[s.name, unread > 0 && s.nameNew]}>{peerName}</Text>
+        <Text numberOfLines={1} style={[s.preview, unread > 0 && s.previewNew]}>
+          {lastText || "Say hi!"}
+        </Text>
+      </View>
+      {unread > 0 ? (
+        <View style={s.badge}>
+          <Text style={s.badgeText}>{unread > 99 ? "99+" : unread}</Text>
+        </View>
+      ) : (
+        <Ionicons name="chevron-forward" size={20} color={C.neutral} />
+      )}
+    </Pressable>
+  );
+}
 
 export default function Messages() {
   const insets = useSafeAreaInsets();
@@ -117,34 +159,16 @@ export default function Messages() {
           keyExtractor={(c) => c.id}
           renderItem={({ item }) => {
             const peer = peerOf(item, user?.uid ?? "");
-            const photo = peer.photoURL ? AVATARS[peer.photoURL] : null;
-            const unread = item.unread?.[user?.uid ?? ""] ?? 0;
             return (
-              <Pressable
-                onPress={() => router.push(`/chat/${item.id}` as any)}
-                style={({ pressed }) => [s.row, pressed && { opacity: 0.6 }]}
-              >
-                {photo ? (
-                  <Image source={photo} style={s.avatarImg} />
-                ) : (
-                  <View style={s.avatar}>
-                    <Text style={s.avatarText}>{(peer.username[0] ?? "?").toUpperCase()}</Text>
-                  </View>
-                )}
-                <View style={s.mid}>
-                  <Text style={[s.name, unread > 0 && s.nameNew]}>{peer.username}</Text>
-                  <Text numberOfLines={1} style={[s.preview, unread > 0 && s.previewNew]}>
-                    {item.lastText || "Say hi!"}
-                  </Text>
-                </View>
-                {unread > 0 ? (
-                  <View style={s.badge}>
-                    <Text style={s.badgeText}>{unread > 99 ? "99+" : unread}</Text>
-                  </View>
-                ) : (
-                  <Ionicons name="chevron-forward" size={20} color={C.neutral} />
-                )}
-              </Pressable>
+              <ChatRow
+                chatId={item.id}
+                peerUid={peer.uid}
+                peerName={peer.username}
+                mappingPhoto={peer.photoURL}
+                lastText={item.lastText}
+                unread={item.unread?.[user?.uid ?? ""] ?? 0}
+                meUid={user?.uid ?? ""}
+              />
             );
           }}
           ListEmptyComponent={

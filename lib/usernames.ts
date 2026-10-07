@@ -169,7 +169,16 @@ export async function changeUsername(
   });
 }
 
-/** Set profile picture (key of a bundled avatar). Mirrors into the public username doc. */
+/** One-time self-heal: make sure my public mapping carries my current avatar. */
+export async function healMyMapping(uid: string, username: string, photoURL: string | null): Promise<void> {
+  try {
+    const ref = doc(db, "usernames", key(username));
+    const snap = await getDoc(ref);
+    if (snap.exists() && (snap.data().photoURL ?? null) !== (photoURL ?? null)) {
+      await updateDoc(ref, { photoURL: photoURL ?? null });
+    }
+  } catch {}
+}
 export async function updatePhoto(uid: string, username: string, photo: string): Promise<void> {
   await updateDoc(doc(db, "users", uid), { photoURL: photo });
   if (username.trim()) {

@@ -5,7 +5,30 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { getFollowers, getFollowing, type FollowDoc } from "../lib/cloud";
 import { AVATARS } from "../lib/avatars";
+import { usePeerPhoto } from "../lib/usePeerPhoto";
 import { C } from "../lib/theme";
+
+function FollowRow({ item }: { item: FollowDoc }) {
+  const router = useRouter();
+  const photoKey = usePeerPhoto(item.uid, item.photoURL);
+  const photo = photoKey ? AVATARS[photoKey] : null;
+  return (
+    <Pressable
+      onPress={() => router.push(`/user/${encodeURIComponent(item.username)}` as any)}
+      style={({ pressed }) => [s.row, pressed && { opacity: 0.6 }]}
+    >
+      {photo ? (
+        <Image source={photo} style={s.avatarImg} />
+      ) : (
+        <View style={s.avatar}>
+          <Text style={s.avatarText}>{(item.username[0] ?? "?").toUpperCase()}</Text>
+        </View>
+      )}
+      <Text style={s.name}>{item.username}</Text>
+      <Ionicons name="chevron-forward" size={20} color={C.neutral} />
+    </Pressable>
+  );
+}
 
 export default function Follows() {
   const insets = useSafeAreaInsets();
@@ -44,22 +67,7 @@ export default function Follows() {
         <FlatList
           data={list}
           keyExtractor={(u) => u.uid}
-          renderItem={({ item }) => (
-            <Pressable
-              onPress={() => router.push(`/user/${encodeURIComponent(item.username)}` as any)}
-              style={({ pressed }) => [s.row, pressed && { opacity: 0.6 }]}
-            >
-              {item.photoURL && AVATARS[item.photoURL] ? (
-                <Image source={AVATARS[item.photoURL]} style={s.avatarImg} />
-              ) : (
-                <View style={s.avatar}>
-                  <Text style={s.avatarText}>{(item.username[0] ?? "?").toUpperCase()}</Text>
-                </View>
-              )}
-              <Text style={s.name}>{item.username}</Text>
-              <Ionicons name="chevron-forward" size={20} color={C.neutral} />
-            </Pressable>
-          )}
+          renderItem={({ item }) => <FollowRow item={item} />}
           ListEmptyComponent={<Text style={s.empty}>Nobody here yet.</Text>}
         />
       )}

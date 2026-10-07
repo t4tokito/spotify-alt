@@ -19,6 +19,7 @@ import {
   changeUsername,
   claimUsername,
   getProfile,
+  healMyMapping,
   isUsernameAvailable,
   resolveUsernameToEmail,
   updatePhoto as updatePhotoDoc,
@@ -87,7 +88,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setUser(u);
       if (u) {
         try {
-          setProfile(await getProfile(u.uid));
+          const p = await getProfile(u.uid);
+          setProfile(p);
+          if (p?.username) healMyMapping(u.uid, p.username, p.photoURL ?? null).catch(() => {});
         } catch {
           setProfile(null);
         }

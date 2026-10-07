@@ -7,6 +7,7 @@ import { Song, searchSongs } from "../lib/music";
 import { FoundUser, searchUsernames } from "../lib/usernames";
 import { AVATARS } from "../lib/avatars";
 import { SongRow } from "../components/SongRow";
+import { usePeerPhoto } from "../lib/usePeerPhoto";
 import { SectionTitle } from "../components/SectionTitle";
 import { useAuth } from "../lib/auth";
 import { getFollowExplore } from "../lib/cloud";
@@ -14,6 +15,28 @@ import { usePlayer } from "../lib/player";
 import { C, tint } from "../lib/theme";
 
 const QUICK = ["Arijit Singh", "Diljit Dosanjh", "AP Dhillon", "Shreya Ghoshal", "Honey Singh", "Lata Mangeshkar", "KR$NA", "Taylor Swift"];
+
+function PersonRow({ item }: { item: FoundUser }) {
+  const router = useRouter();
+  const photoKey = usePeerPhoto(item.uid, item.photoURL);
+  const photo = photoKey ? AVATARS[photoKey] : null;
+  return (
+    <Pressable
+      onPress={() => router.push(`/user/${encodeURIComponent(item.username)}` as any)}
+      style={({ pressed }) => [s.person, pressed && { opacity: 0.6 }]}
+    >
+      {photo ? (
+        <Image source={photo} style={s.avatarImg} />
+      ) : (
+        <View style={s.avatar}>
+          <Text style={s.avatarText}>{(item.username[0] ?? "?").toUpperCase()}</Text>
+        </View>
+      )}
+      <Text style={s.personName}>{item.username}</Text>
+      <Ionicons name="chevron-forward" size={20} color={C.neutral} />
+    </Pressable>
+  );
+}
 
 type Tab = "songs" | "people";
 
@@ -144,22 +167,7 @@ export default function Search() {
           data={people}
           keyExtractor={(p) => p.uid}
           keyboardShouldPersistTaps="handled"
-          renderItem={({ item }) => (
-            <Pressable
-              onPress={() => router.push(`/user/${encodeURIComponent(item.username)}` as any)}
-              style={({ pressed }) => [s.person, pressed && { opacity: 0.6 }]}
-            >
-              {item.photoURL && AVATARS[item.photoURL] ? (
-                <Image source={AVATARS[item.photoURL]} style={s.avatarImg} />
-              ) : (
-                <View style={s.avatar}>
-                  <Text style={s.avatarText}>{(item.username[0] ?? "?").toUpperCase()}</Text>
-                </View>
-              )}
-              <Text style={s.personName}>{item.username}</Text>
-              <Ionicons name="chevron-forward" size={20} color={C.neutral} />
-            </Pressable>
-          )}
+          renderItem={({ item }) => <PersonRow item={item} />}
           ListEmptyComponent={!loading && q ? (
             <Text style={s.emptySolo}>No users found.</Text>
           ) : null}
