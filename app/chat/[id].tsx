@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { ActivityIndicator, FlatList, Image, Pressable, StyleSheet, Text, TextInput, View } from "react-native";
+import { ActivityIndicator, FlatList, Image, KeyboardAvoidingView, Platform, Pressable, StyleSheet, Text, TextInput, View } from "react-native";
 import { useFocusEffect } from "expo-router";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -76,7 +76,9 @@ export default function ChatThread() {
   const peerSeen = lastMine ? (chat?.lastRead?.[peer?.uid ?? ""] ?? 0) >= lastMine.at : false;
 
   async function send() {
-    if (!text.trim() || sending || !user) return;
+    const msg = text.trim();
+    if (!msg || sending || !user) return;
+    setText("");
     setSending(true);
     setSendError("");
     try {
@@ -84,9 +86,8 @@ export default function ChatThread() {
         String(id),
         chat?.participants ?? [user.uid],
         { uid: user.uid, username: profile?.username ?? "Me" },
-        text
+        msg
       );
-      setText("");
     } catch (e: any) {
       console.warn("send message failed:", e);
       setSendError(e?.code === "permission-denied" ? "Not allowed — check Firestore rules." : "Send failed. Try again.");
@@ -104,7 +105,10 @@ export default function ChatThread() {
   }
 
   return (
-    <View style={[s.root, { paddingTop: insets.top }]}>
+    <KeyboardAvoidingView
+      behavior={Platform.OS === "ios" ? "padding" : "height"}
+      style={[s.root, { paddingTop: insets.top }]}
+    >
       <View style={s.head}>
         <Pressable onPress={() => router.back()} hitSlop={12} style={s.back}>
           <Ionicons name="arrow-back" size={24} color={C.text} />
@@ -197,7 +201,7 @@ export default function ChatThread() {
           onClose={() => setShareOpen(false)}
         />
       )}
-    </View>
+    </KeyboardAvoidingView>
   );
 }
 
