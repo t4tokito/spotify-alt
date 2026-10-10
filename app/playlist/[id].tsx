@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { ActivityIndicator, FlatList, Image, Modal, Pressable, StyleSheet, Text, View } from "react-native";
+import DraggableFlatList from "react-native-draggable-flatlist";
 import { LinearGradient } from "expo-linear-gradient";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -51,7 +52,7 @@ export default function PlaylistDetail() {
   const { id, owner } = useLocalSearchParams<{ id: string; owner?: string }>();
   const { play } = usePlayer();
   const { user } = useAuth();
-  const { playlists, deletePlaylist, removeFromPlaylist, setPlaylistIcon, setVisibility } = usePlaylists();
+  const { playlists, deletePlaylist, removeFromPlaylist, setPlaylistIcon, setVisibility, reorderPlaylist } = usePlaylists();
   const [addOpen, setAddOpen] = useState(false);
   const [iconOpen, setIconOpen] = useState(false);
   const [saveOpen, setSaveOpen] = useState(false);
@@ -96,19 +97,10 @@ export default function PlaylistDetail() {
 
   const vis = pl.visibility ?? "private";
 
-  return (
-    <View style={[s.root, { paddingTop: insets.top }]}>
-      <LinearGradient colors={[tint(C.accent, 0.28), "transparent"]} style={s.fade}>
-        <Pressable onPress={() => router.back()} hitSlop={12} style={s.back}>
-          <Ionicons name="arrow-back" size={24} color={C.text} />
-        </Pressable>
-      </LinearGradient>
-
-      <FlatList
-        data={pl.songs}
-        keyExtractor={(i) => i.id}
-        ListHeaderComponent={
-          <View style={s.header}>
+  function Header() {
+    if (!pl) return null;
+    return (
+      <View style={s.header}>
             <Pressable onPress={() => isMine && setIconOpen(true)} style={s.coverWrap}>
               <Cover icon={pl.icon} songs={pl.songs} />
               {isMine && (
@@ -198,29 +190,72 @@ export default function PlaylistDetail() {
               )}
             </View>
           </View>
-        }
-        renderItem={({ item }) => (
-          <SongRow
-            song={item}
-            queue={pl.songs}
-            onRemove={isMine ? () => removeFromPlaylist(pl.id, item.id) : undefined}
-          />
-        )}
-        ListEmptyComponent={<Text style={s.empty}>Empty playlist.</Text>}
-      />
-      {isMine && (
-        <AddSongsModal visible={addOpen} playlistId={pl.id} playlistName={pl.name} onClose={() => setAddOpen(false)} />
-      )}
-      {isMine && (
-        <ShareSheet
-          visible={shareOpen}
-          payload={{ type: "playlist", playlist: { id: pl.id, ownerUid: user?.uid ?? "", name: pl.name, songCount: pl.songs.length } }}
-          onClose={() => setShareOpen(false)}
+    );
+  }
+
+  const emptyText = <Text style={s.empty}>Empty playlist.</Text>;
+
+  if (!isMine) {
+    return (
+      <View style={[s.root, { paddingTop: insets.top }]}>
+        <LinearGradient colors={[tint(C.accent, 0.28), "transparent"]} style={s.fade}>
+          <Pressable onPress={() => router.back()} hitSlop={12} style={s.back}>
+            <Ionicons name="arrow-back" size={24} color={C.text} />
+          </Pressable>
+        </LinearGradient>
+        <FlatList
+          data={pl.songs}
+          keyExtractor={(i) => i.id}
+          ListHeaderComponent={<Header />}
+          renderItem={({ item }) => <SongRow song={item} queue={pl.songs} />}
+          ListEmptyComponent={emptyText}
         />
-      )}
-      {!isMine && (
         <ImportPlaylistModal visible={saveOpen} songs={pl.songs} sourceName={pl.name} onClose={() => setSaveOpen(false)} />
-      )}
+      </View>
+    );
+  }
+  // own playlist: draggable rows to reorder
+  return (
+    <View style={[s.root, { paddingTop: insets.top }]}>
+      <LinearGradient colors={[tint(C.accent, 0.28), "transparent"]} style={s.fade}>
+        <Pressable onPress={() => router.back()} hitSlop={12} style={s.back}>
+          <Ionicons name="arrow-back" size={24} color={C.text} />
+        </Pressable>
+      </LinearGradient>
+      <DraggableFlatList
+        data={pl.songs}
+        keyExtractor={(i) => i.id}
+        ListHeaderComponent={<Header />}
+        ListEmptyComponent={emptyText}
+        onDragEnd={({ data }) => reorderPlaylist(pl.id, data)}
+        activationDistance={12}
+        renderItem={({ item, drag, isActive }) => (
+          <Pressable
+            onPress={() => play(item, pl.songs)}
+            onLongPress={drag}
+            delayLongPress={180}
+            style={[s.dRow, isActive && s.dActive]}
+          >
+            <Image source={{ uri: item.imageSmall || item.image }} style={s.dArt} />
+            <View style={s.dMid}>
+              <Text numberOfLines={1} style={s.dTitle}>{item.name}</Text>
+              <Text numberOfLines={1} style={s.dSub}>{item.artists}</Text>
+            </View>
+            <Pressable onPress={() => removeFromPlaylist(pl.id, item.id)} hitSlop={10} style={s.dIcon}>
+              <Ionicons name="remove-circle-outline" size={20} color={C.neutral} />
+            </Pressable>
+            <Pressable onPressIn={drag} hitSlop={10} style={s.dIcon}>
+              <Ionicons name="reorder-three-outline" size={22} color={C.neutral} />
+            </Pressable>
+          </Pressable>
+        )}
+      />
+      <AddSongsModal visible={addOpen} playlistId={pl.id} playlistName={pl.name} onClose={() => setAddOpen(false)} />
+      <ShareSheet
+        visible={shareOpen}
+        payload={{ type: "playlist", playlist: { id: pl.id, ownerUid: user?.uid ?? "", name: pl.name, songCount: pl.songs.length } }}
+        onClose={() => setShareOpen(false)}
+      />
 
       <Modal visible={iconOpen} transparent animationType="fade" onRequestClose={() => setIconOpen(false)}>
         <Pressable style={s.back2} onPress={() => setIconOpen(false)} />
@@ -293,6 +328,13 @@ const s = StyleSheet.create({
   },
   disabled: { opacity: 0.35 },
   iconBtn: { padding: 10 },
+  dRow: { flexDirection: "row", alignItems: "center", paddingVertical: 8, paddingHorizontal: 16, gap: 8, backgroundColor: C.bg },
+  dActive: { backgroundColor: C.surface, borderRadius: 12 },
+  dArt: { width: 52, height: 52, borderRadius: 11, backgroundColor: C.surface },
+  dMid: { flex: 1 },
+  dTitle: { color: C.text, fontSize: 15, fontWeight: "600", letterSpacing: -0.2 },
+  dSub: { color: C.textDim, fontSize: 13, marginTop: 2 },
+  dIcon: { padding: 6 },
   saveBtn: {
     flexDirection: "row", alignItems: "center", gap: 6,
     backgroundColor: C.accent, borderRadius: 20, paddingHorizontal: 18, paddingVertical: 10,
