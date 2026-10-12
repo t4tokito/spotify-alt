@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { memo, useEffect, useMemo, useState } from "react";
 import { ActivityIndicator, FlatList, Image, Modal, Pressable, StyleSheet, Text, View } from "react-native";
 import DraggableFlatList from "react-native-draggable-flatlist";
 import { LinearGradient } from "expo-linear-gradient";
@@ -7,6 +7,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { usePlayer } from "../../lib/player";
 import { usePlaylists, type Playlist } from "../../lib/playlists";
+import type { Song } from "../../lib/music";
 import { loadPublicPlaylist } from "../../lib/cloud";
 import { useAuth } from "../../lib/auth";
 import { PLAYLIST_ICONS, PLAYLIST_ICON_KEYS } from "../../lib/playlistIcons";
@@ -21,6 +22,61 @@ function totalMins(songs: { duration: number }[]): string {
   const m = Math.round(secs / 60);
   return m < 1 ? "few sec" : `${m} min`;
 }
+
+/**
+ * Draggable song list, memoized so playback position ticks from the player
+ * context never re-render it mid-drag (that broke the drop snap).
+ */
+const DragList = memo(function DragList({
+  songs,
+  header,
+  empty,
+  playlistId,
+  play,
+  removeFromPlaylist,
+  reorderPlaylist,
+}: {
+  songs: Song[];
+  header: JSX.Element | null;
+  empty: JSX.Element | null;
+  playlistId: string;
+  play: (song: Song, queue: Song[]) => void;
+  removeFromPlaylist: (playlistId: string, songId: string) => void;
+  reorderPlaylist: (id: string, songs: Song[]) => void;
+}) {
+  return (
+    <DraggableFlatList
+      data={songs}
+      keyExtractor={(i) => i.id}
+      ListHeaderComponent={header}
+      ListEmptyComponent={empty}
+      onDragEnd={({ data }) => reorderPlaylist(playlistId, data)}
+      renderItem={({ item, drag, isActive }) => (
+        <Pressable
+          onPress={() => play(item, songs)}
+          style={[s.dRow, isActive && s.dActive]}
+        >
+          <Image source={{ uri: item.imageSmall || item.image }} style={s.dArt} />
+          <View style={s.dMid}>
+            <Text numberOfLines={1} style={s.dTitle}>{item.name}</Text>
+            <Text numberOfLines={1} style={s.dSub}>{item.artists}</Text>
+          </View>
+          <Pressable onPress={() => removeFromPlaylist(playlistId, item.id)} hitSlop={10} style={s.dIcon}>
+            <Ionicons name="remove-circle-outline" size={20} color={C.neutral} />
+          </Pressable>
+          <Pressable
+            onLongPress={drag}
+            delayLongPress={150}
+            hitSlop={10}
+            style={s.dIcon}
+          >
+            <Ionicons name="reorder-three-outline" size={24} color={isActive ? C.accent : C.neutral} />
+          </Pressable>
+        </Pressable>
+      )}
+    />
+  );
+});
 
 function Cover({ icon, songs }: { icon?: string | null; songs: { image: string; imageSmall: string }[] }) {
   if (icon && PLAYLIST_ICONS[icon]) {
@@ -214,7 +270,11 @@ export default function PlaylistDetail() {
       </View>
     );
   }
-  // own playlist: draggable rows to reorder
+  // own playlist: draggable rows to reorder.
+  // Header + list are memoized on playlist data so player position ticks
+  // never disturb an active drag.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  const headerEl = useMemo(() => <Header />, [pl]);
   return (
     <View style={[s.root, { paddingTop: insets.top }]}>
       <LinearGradient colors={[tint(C.accent, 0.28), "transparent"]} style={s.fade}>
@@ -222,35 +282,14 @@ export default function PlaylistDetail() {
           <Ionicons name="arrow-back" size={24} color={C.text} />
         </Pressable>
       </LinearGradient>
-      <DraggableFlatList
-        data={pl.songs}
-        keyExtractor={(i) => i.id}
-        ListHeaderComponent={<Header />}
-        ListEmptyComponent={emptyText}
-        onDragEnd={({ data }) => reorderPlaylist(pl.id, data)}
-        renderItem={({ item, drag, isActive }) => (
-          <Pressable
-            onPress={() => play(item, pl.songs)}
-            style={[s.dRow, isActive && s.dActive]}
-          >
-            <Image source={{ uri: item.imageSmall || item.image }} style={s.dArt} />
-            <View style={s.dMid}>
-              <Text numberOfLines={1} style={s.dTitle}>{item.name}</Text>
-              <Text numberOfLines={1} style={s.dSub}>{item.artists}</Text>
-            </View>
-            <Pressable onPress={() => removeFromPlaylist(pl.id, item.id)} hitSlop={10} style={s.dIcon}>
-              <Ionicons name="remove-circle-outline" size={20} color={C.neutral} />
-            </Pressable>
-            <Pressable
-              onLongPress={drag}
-              delayLongPress={150}
-              hitSlop={10}
-              style={s.dIcon}
-            >
-              <Ionicons name="reorder-three-outline" size={24} color={isActive ? C.accent : C.neutral} />
-            </Pressable>
-          </Pressable>
-        )}
+      <DragList
+        songs={pl.songs}
+        header={headerEl}
+        empty={emptyText}
+        playlistId={pl.id}
+        play={play}
+        removeFromPlaylist={removeFromPlaylist}
+        reorderPlaylist={reorderPlaylist}
       />
       <AddSongsModal visible={addOpen} playlistId={pl.id} playlistName={pl.name} onClose={() => setAddOpen(false)} />
       <ShareSheet
