@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { ActivityIndicator, FlatList, Image, Modal, Pressable, StyleSheet, Text, View } from "react-native";
+import DraggableFlatList from "react-native-draggable-flatlist";
 import { LinearGradient } from "expo-linear-gradient";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -221,39 +222,33 @@ export default function PlaylistDetail() {
           <Ionicons name="arrow-back" size={24} color={C.text} />
         </Pressable>
       </LinearGradient>
-      <FlatList
+      <DraggableFlatList
         data={pl.songs}
         keyExtractor={(i) => i.id}
         ListHeaderComponent={<Header />}
         ListEmptyComponent={emptyText}
-        renderItem={({ item, index }) => (
-          <Pressable onPress={() => play(item, pl.songs)} style={s.dRow}>
+        onDragEnd={({ data }) => reorderPlaylist(pl.id, data)}
+        renderItem={({ item, drag, isActive }) => (
+          <Pressable
+            onPress={() => play(item, pl.songs)}
+            style={[s.dRow, isActive && s.dActive]}
+          >
             <Image source={{ uri: item.imageSmall || item.image }} style={s.dArt} />
             <View style={s.dMid}>
               <Text numberOfLines={1} style={s.dTitle}>{item.name}</Text>
               <Text numberOfLines={1} style={s.dSub}>{item.artists}</Text>
             </View>
-            <View style={s.dBtns}>
-              <Pressable
-                onPress={() => moveSong(pl.id, item.id, -1)}
-                disabled={index === 0}
-                hitSlop={8}
-                style={[s.dIcon, index === 0 && s.dOff]}
-              >
-                <Ionicons name="chevron-up" size={22} color={C.neutral} />
-              </Pressable>
-              <Pressable
-                onPress={() => moveSong(pl.id, item.id, 1)}
-                disabled={index === pl.songs.length - 1}
-                hitSlop={8}
-                style={[s.dIcon, index === pl.songs.length - 1 && s.dOff]}
-              >
-                <Ionicons name="chevron-down" size={22} color={C.neutral} />
-              </Pressable>
-              <Pressable onPress={() => removeFromPlaylist(pl.id, item.id)} hitSlop={10} style={s.dIcon}>
-                <Ionicons name="remove-circle-outline" size={20} color={C.neutral} />
-              </Pressable>
-            </View>
+            <Pressable onPress={() => removeFromPlaylist(pl.id, item.id)} hitSlop={10} style={s.dIcon}>
+              <Ionicons name="remove-circle-outline" size={20} color={C.neutral} />
+            </Pressable>
+            <Pressable
+              onLongPress={drag}
+              delayLongPress={150}
+              hitSlop={10}
+              style={s.dIcon}
+            >
+              <Ionicons name="reorder-three-outline" size={24} color={isActive ? C.accent : C.neutral} />
+            </Pressable>
           </Pressable>
         )}
       />
@@ -336,6 +331,7 @@ const s = StyleSheet.create({
   disabled: { opacity: 0.35 },
   iconBtn: { padding: 10 },
   dRow: { flexDirection: "row", alignItems: "center", paddingVertical: 8, paddingHorizontal: 16, gap: 8, backgroundColor: C.bg },
+  dActive: { backgroundColor: C.surface, borderRadius: 12 },
   dArt: { width: 52, height: 52, borderRadius: 11, backgroundColor: C.surface },
   dMid: { flex: 1 },
   dTitle: { color: C.text, fontSize: 15, fontWeight: "600", letterSpacing: -0.2 },
