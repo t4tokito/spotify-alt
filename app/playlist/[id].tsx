@@ -1,4 +1,4 @@
-import { memo, useEffect, useMemo, useState } from "react";
+import { memo, useEffect, useMemo, useState, type ReactElement } from "react";
 import { ActivityIndicator, FlatList, Image, Modal, Pressable, StyleSheet, Text, View } from "react-native";
 import DraggableFlatList from "react-native-draggable-flatlist";
 import { LinearGradient } from "expo-linear-gradient";
@@ -37,8 +37,8 @@ const DragList = memo(function DragList({
   reorderPlaylist,
 }: {
   songs: Song[];
-  header: JSX.Element | null;
-  empty: JSX.Element | null;
+  header: ReactElement | null;
+  empty: ReactElement | null;
   playlistId: string;
   play: (song: Song, queue: Song[]) => void;
   removeFromPlaylist: (playlistId: string, songId: string) => void;
