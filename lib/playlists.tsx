@@ -100,12 +100,18 @@ export function PlaylistProvider({ children }: { children: React.ReactNode }) {
   }, [uid]);
 
   useEffect(() => {
-    AsyncStorage.setItem(KEY, JSON.stringify(playlists)).catch(() => {});
-    if (!uid || !cloudReady.current) return;
+    // debounced: drop commits instantly on screen, disk/cloud follow after
+    const t2 = setTimeout(() => {
+      AsyncStorage.setItem(KEY, JSON.stringify(playlists)).catch(() => {});
+    }, 800);
+    if (!uid || !cloudReady.current) return () => clearTimeout(t2);
     const t = setTimeout(() => {
       Promise.all(playlists.map((p) => saveCloudPlaylist(uid, p))).catch(() => {});
     }, 2000);
-    return () => clearTimeout(t);
+    return () => {
+      clearTimeout(t2);
+      clearTimeout(t);
+    };
   }, [playlists, uid]);
 
   const createPlaylist = useCallback((name: string): Playlist => {

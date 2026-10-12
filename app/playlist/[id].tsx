@@ -1,4 +1,4 @@
-import { memo, useEffect, useMemo, useState, type ReactElement } from "react";
+import { memo, useEffect, useMemo, useRef, useState, type ReactElement } from "react";
 import { ActivityIndicator, FlatList, Image, Modal, Pressable, StyleSheet, Text, View } from "react-native";
 import DraggableFlatList from "react-native-draggable-flatlist";
 import { LinearGradient } from "expo-linear-gradient";
@@ -26,7 +26,50 @@ function totalMins(songs: { duration: number }[]): string {
 /**
  * Draggable song list, memoized so playback position ticks from the player
  * context never re-render it mid-drag (that broke the drop snap).
+ * Rows are memoized too — on drop only order changes, items keep identity.
  */
+const DragRow = memo(function DragRow({
+  item,
+  queueRef,
+  playlistId,
+  drag,
+  isActive,
+  play,
+  removeFromPlaylist,
+}: {
+  item: Song;
+  queueRef: { current: Song[] };
+  playlistId: string;
+  drag: () => void;
+  isActive: boolean;
+  play: (song: Song, queue: Song[]) => void;
+  removeFromPlaylist: (playlistId: string, songId: string) => void;
+}) {
+  return (
+    <Pressable
+      onPress={() => play(item, queueRef.current)}
+      style={[s.dRow, isActive && s.dActive]}
+    >
+      <Image source={{ uri: item.imageSmall || item.image }} style={s.dArt} />
+      <View style={s.dMid}>
+        <Text numberOfLines={1} style={s.dTitle}>{item.name}</Text>
+        <Text numberOfLines={1} style={s.dSub}>{item.artists}</Text>
+      </View>
+      <Pressable onPress={() => removeFromPlaylist(playlistId, item.id)} hitSlop={10} style={s.dIcon}>
+        <Ionicons name="remove-circle-outline" size={20} color={C.neutral} />
+      </Pressable>
+      <Pressable
+        onLongPress={drag}
+        delayLongPress={150}
+        hitSlop={10}
+        style={s.dIcon}
+      >
+        <Ionicons name="reorder-three-outline" size={24} color={isActive ? C.accent : C.neutral} />
+      </Pressable>
+    </Pressable>
+  );
+});
+
 const DragList = memo(function DragList({
   songs,
   header,
@@ -44,6 +87,22 @@ const DragList = memo(function DragList({
   removeFromPlaylist: (playlistId: string, songId: string) => void;
   reorderPlaylist: (id: string, songs: Song[]) => void;
 }) {
+  const queueRef = useRef<Song[]>(songs);
+  queueRef.current = songs;
+  const renderItem = useCallback(
+    ({ item, drag, isActive }: { item: Song; drag: () => void; isActive: boolean }) => (
+      <DragRow
+        item={item}
+        queueRef={queueRef}
+        playlistId={playlistId}
+        drag={drag}
+        isActive={isActive}
+        play={play}
+        removeFromPlaylist={removeFromPlaylist}
+      />
+    ),
+    [playlistId, play, removeFromPlaylist]
+  );
   return (
     <DraggableFlatList
       data={songs}
@@ -51,29 +110,7 @@ const DragList = memo(function DragList({
       ListHeaderComponent={header}
       ListEmptyComponent={empty}
       onDragEnd={({ data }) => reorderPlaylist(playlistId, data)}
-      renderItem={({ item, drag, isActive }) => (
-        <Pressable
-          onPress={() => play(item, songs)}
-          style={[s.dRow, isActive && s.dActive]}
-        >
-          <Image source={{ uri: item.imageSmall || item.image }} style={s.dArt} />
-          <View style={s.dMid}>
-            <Text numberOfLines={1} style={s.dTitle}>{item.name}</Text>
-            <Text numberOfLines={1} style={s.dSub}>{item.artists}</Text>
-          </View>
-          <Pressable onPress={() => removeFromPlaylist(playlistId, item.id)} hitSlop={10} style={s.dIcon}>
-            <Ionicons name="remove-circle-outline" size={20} color={C.neutral} />
-          </Pressable>
-          <Pressable
-            onLongPress={drag}
-            delayLongPress={150}
-            hitSlop={10}
-            style={s.dIcon}
-          >
-            <Ionicons name="reorder-three-outline" size={24} color={isActive ? C.accent : C.neutral} />
-          </Pressable>
-        </Pressable>
-      )}
+      renderItem={renderItem}
     />
   );
 });
