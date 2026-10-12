@@ -1,7 +1,7 @@
 import { useEffect } from "react";
 import { Stack, usePathname, useRouter, useSegments } from "expo-router";
 import { StatusBar } from "expo-status-bar";
-import { ActivityIndicator, LogBox, View } from "react-native";
+import { ActivityIndicator, View } from "react-native";
 import * as Updates from "expo-updates";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { SafeAreaProvider } from "react-native-safe-area-context";
@@ -10,9 +10,6 @@ import { PlayerProvider } from "../lib/player";
 import { PlaylistProvider } from "../lib/playlists";
 import { BottomNav } from "../components/BottomNav";
 import { MiniPlayer } from "../components/MiniPlayer";
-
-// Dev-only noise from a third-party list library — harmless.
-LogBox.ignoreLogs(["InteractionManager has been deprecated"]);
 
 const AUTH_SCREENS = ["welcome", "login", "signup", "forgot-password"];
 

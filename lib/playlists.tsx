@@ -23,6 +23,7 @@ type PlaylistContextType = {
   setPlaylistIcon: (id: string, icon: string) => void;
   setVisibility: (id: string, v: "public" | "private") => void;
   reorderPlaylist: (id: string, songs: Song[]) => void;
+  moveSong: (id: string, songId: string, dir: -1 | 1) => void;
   addToPlaylist: (playlistId: string, song: Song) => void;
   removeFromPlaylist: (playlistId: string, songId: string) => void;
   isInPlaylist: (playlistId: string, songId: string) => boolean;
@@ -139,6 +140,20 @@ export function PlaylistProvider({ children }: { children: React.ReactNode }) {
     setPlaylists((p) => p.map((x) => (x.id === id ? { ...x, songs } : x)));
   }, []);
 
+  const moveSong = useCallback((id: string, songId: string, dir: -1 | 1) => {
+    setPlaylists((p) =>
+      p.map((x) => {
+        if (x.id !== id) return x;
+        const i = x.songs.findIndex((s) => s.id === songId);
+        const j = i + dir;
+        if (i < 0 || j < 0 || j >= x.songs.length) return x;
+        const songs = [...x.songs];
+        [songs[i], songs[j]] = [songs[j], songs[i]];
+        return { ...x, songs };
+      })
+    );
+  }, []);
+
   const addToPlaylist = useCallback((playlistId: string, song: Song) => {
     setPlaylists((p) =>
       p.map((x) =>
@@ -164,8 +179,8 @@ export function PlaylistProvider({ children }: { children: React.ReactNode }) {
   );
 
   const value = useMemo(
-    () => ({ playlists, createPlaylist, deletePlaylist, renamePlaylist, setPlaylistIcon, setVisibility, reorderPlaylist, addToPlaylist, removeFromPlaylist, isInPlaylist }),
-    [playlists, createPlaylist, deletePlaylist, renamePlaylist, setPlaylistIcon, setVisibility, reorderPlaylist, addToPlaylist, removeFromPlaylist, isInPlaylist]
+    () => ({ playlists, createPlaylist, deletePlaylist, renamePlaylist, setPlaylistIcon, setVisibility, reorderPlaylist, moveSong, addToPlaylist, removeFromPlaylist, isInPlaylist }),
+    [playlists, createPlaylist, deletePlaylist, renamePlaylist, setPlaylistIcon, setVisibility, reorderPlaylist, moveSong, addToPlaylist, removeFromPlaylist, isInPlaylist]
   );
 
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;
