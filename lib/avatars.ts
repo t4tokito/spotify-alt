@@ -1,6 +1,7 @@
 /** Bundled profile pictures (static requires so Metro bundles them). */
 export const AVATARS: Record<string, any> = {
   "903534744013536076.jpeg": require("../assets/logo/903534744013536076.jpeg"),
+  "☆Aesthetic pfp☆.jpeg": require("../assets/logo/☆Aesthetic pfp☆.jpeg"),
   "Alisa Mikhailovna Kujou.jpeg": require("../assets/logo/Alisa Mikhailovna Kujou.jpeg"),
   "app icon anime music.jpeg": require("../assets/logo/app icon anime music.jpeg"),
   "Chainsaw man (Denji) Ft_ The Weeknd [Starboy].jpeg": require("../assets/logo/Chainsaw man (Denji) Ft_ The Weeknd [Starboy].jpeg"),
