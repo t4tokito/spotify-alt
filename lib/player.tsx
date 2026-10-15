@@ -5,6 +5,7 @@ import { useAudioPlayer, useAudioPlayerStatus, setAudioModeAsync, requestNotific
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import type { Song } from "./music";
 import { getSuggestions } from "./music";
+import { useDownloads } from "./downloads";
 import { useAuth } from "./auth";
 import { likeCloud, loadCloudHistory, loadCloudLiked, loadCloudStats, saveCloudHistory, saveCloudStats, unlikeCloud, bumpGlobalPlay } from "./cloud";
 
@@ -54,6 +55,7 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
   const status = useAudioPlayerStatus(player);
   const { user } = useAuth();
   const uid = user?.uid ?? null;
+  const { localUri } = useDownloads();
   const [current, setCurrent] = useState<Song | null>(null);
   const [queue, setQueue] = useState<Song[]>([]);
   const [liked, setLiked] = useState<Record<string, Song>>({});
@@ -291,14 +293,14 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
       setCurrent(nxt);
       syncLockScreen(nxt);
       try {
-        player.replace({ uri: nxt.url });
+        player.replace({ uri: localUri(nxt.id) ?? nxt.url });
         player.volume = volumeRef.current;
         player.play();
       } catch {}
       setHistory((h) => [nxt, ...h.filter((x) => x.id !== nxt.id)].slice(0, 50));
       recordPlay(nxt);
     },
-    [player, recordPlay, syncLockScreen]
+    [player, recordPlay, syncLockScreen, localUri]
   );
 
   const stepRef = useRef(step);
@@ -343,14 +345,14 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
       setCurrent(song);
       syncLockScreen(song);
       try {
-        player.replace({ uri: song.url });
+        player.replace({ uri: localUri(song.id) ?? song.url });
         player.volume = volumeRef.current;
         player.play();
       } catch {}
       setHistory((h) => [song, ...h.filter((x) => x.id !== song.id)].slice(0, 50));
       recordPlay(song);
     },
-    [player, recordPlay, syncLockScreen]
+    [player, recordPlay, syncLockScreen, localUri]
   );
 
   const removeFromQueue = useCallback((id: string) => {

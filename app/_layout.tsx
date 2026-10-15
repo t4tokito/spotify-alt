@@ -8,6 +8,7 @@ import { SafeAreaProvider } from "react-native-safe-area-context";
 import { AuthProvider, useAuth } from "../lib/auth";
 import { PlayerProvider } from "../lib/player";
 import { PlaylistProvider } from "../lib/playlists";
+import { DownloadsProvider } from "../lib/downloads";
 import { BottomNav } from "../components/BottomNav";
 import { MiniPlayer } from "../components/MiniPlayer";
 
@@ -73,6 +74,7 @@ export default function RootLayout() {
     <GestureHandlerRootView style={{ flex: 1, backgroundColor: "#121212" }}>
       <SafeAreaProvider>
         <AuthProvider>
+          <DownloadsProvider>
           <PlayerProvider>
           <PlaylistProvider>
             <StatusBar style="light" />
@@ -90,6 +92,7 @@ export default function RootLayout() {
                 <Stack.Screen name="playlist/[id]" />
                 <Stack.Screen name="playlists" />
                 <Stack.Screen name="liked" />
+                <Stack.Screen name="downloads" />
                 <Stack.Screen name="stats" />
                 <Stack.Screen name="follows" />
                 <Stack.Screen name="messages" />
@@ -99,6 +102,7 @@ export default function RootLayout() {
             </Shell>
           </PlaylistProvider>
           </PlayerProvider>
+          </DownloadsProvider>
         </AuthProvider>
       </SafeAreaProvider>
     </GestureHandlerRootView>

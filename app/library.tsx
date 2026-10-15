@@ -5,6 +5,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { usePlayer } from "../lib/player";
 import { usePlaylists } from "../lib/playlists";
+import { useDownloads } from "../lib/downloads";
 import { SongRow } from "../components/SongRow";
 import { PlaylistRow } from "../components/PlaylistRow";
 import { CreatePlaylistModal } from "../components/CreatePlaylistModal";
@@ -16,7 +17,9 @@ export default function Library() {
   const router = useRouter();
   const { liked, history } = usePlayer();
   const { playlists } = usePlaylists();
+  const { downloaded } = useDownloads();
   const likedList = Object.values(liked);
+  const dlCount = Object.keys(downloaded).length;
   const [createOpen, setCreateOpen] = useState(false);
 
   return (
@@ -70,6 +73,20 @@ export default function Library() {
               <View style={s.mid}>
                 <Text style={s.likedName}>Liked Songs</Text>
                 <Text style={s.likedSub}>{likedList.length} songs</Text>
+              </View>
+              <Ionicons name="chevron-forward" size={20} color={C.neutral} />
+            </Pressable>
+
+            <Pressable
+              onPress={() => router.push("/downloads" as any)}
+              style={({ pressed }) => [s.likedRow, pressed && { opacity: 0.6 }]}
+            >
+              <View style={s.likedArt}>
+                <Ionicons name="download-outline" size={22} color={C.accent} />
+              </View>
+              <View style={s.mid}>
+                <Text style={s.likedName}>Downloads</Text>
+                <Text style={s.likedSub}>{dlCount} songs • offline</Text>
               </View>
               <Ionicons name="chevron-forward" size={20} color={C.neutral} />
             </Pressable>

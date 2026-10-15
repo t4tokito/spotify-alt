@@ -5,6 +5,7 @@ import { useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { usePlayer } from "../lib/player";
+import { useDownloads } from "../lib/downloads";
 import { formatTime } from "../lib/music";
 import { AddToPlaylistModal } from "../components/AddToPlaylistModal";
 import { LyricsModal } from "../components/LyricsModal";
@@ -23,6 +24,7 @@ export default function PlayerScreen() {
   const [lyricsOpen, setLyricsOpen] = useState(false);
   const [sleepOpen, setSleepOpen] = useState(false);
   const [shareOpen, setShareOpen] = useState(false);
+  const { downloaded, progress: dlProgress, isDownloaded, isDownloading, download, remove } = useDownloads();
 
   if (!current) {
     return (
@@ -38,6 +40,12 @@ export default function PlayerScreen() {
   const liked = isLiked(current.id);
   const progress = duration > 0 ? position / duration : 0;
   const kbps = current.url.match(/_(\d+)\.mp4/)?.[1];
+  const dlDone = isDownloaded(current.id);
+  const dlBusy = isDownloading(current.id);
+  const dlPct = Math.round((dlProgress[current.id] ?? 0) * 100);
+  const dlSize = downloaded[current.id]?.size
+    ? `${(downloaded[current.id].size / 1048576).toFixed(1)} MB`
+    : "";
 
   return (
     <LinearGradient colors={["#BC8CF244", "#121212"]} style={[s.root, { paddingTop: insets.top }]}>
@@ -146,6 +154,24 @@ export default function PlayerScreen() {
         <Text style={s.volPct}>{Math.round(volume * 100)}%</Text>
       </View>
 
+      <Pressable
+        onPress={() => (dlDone ? remove(current.id) : dlBusy ? undefined : download(current))}
+        style={({ pressed }) => [s.dlRow, pressed && !dlBusy && { opacity: 0.7 }]}
+      >
+        {dlBusy ? (
+          <ActivityIndicator color={C.accent} size="small" />
+        ) : (
+          <Ionicons
+            name={dlDone ? "checkmark-circle" : "download-outline"}
+            size={20}
+            color={dlDone ? C.accent : "#fff"}
+          />
+        )}
+        <Text style={[s.dlText, dlDone && s.dlDoneText]}>
+          {dlBusy ? `Downloading ${dlPct}%` : dlDone ? `Downloaded ${dlSize} • tap to remove` : "Download for offline"}
+        </Text>
+      </Pressable>
+
       <Text style={s.free}>Tokito Music • Free Forever • No Ads{kbps ? ` • ${kbps}kbps` : ""} • {current.language} • {current.year}</Text>
       <View style={{ height: insets.bottom + 10 }} />
       <AddToPlaylistModal visible={plOpen} song={current} onClose={() => setPlOpen(false)} />
@@ -191,6 +217,9 @@ const s = StyleSheet.create({
   volBar: { flex: 1, height: 5, backgroundColor: "#333", borderRadius: 3, overflow: "hidden" },
   volFill: { height: 5, backgroundColor: "#BC8CF2" },
   volPct: { color: "#888", fontSize: 12, width: 38, textAlign: "right" },
+  dlRow: { flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 8, marginTop: 14 },
+  dlText: { color: "#fff", fontSize: 14, fontWeight: "600" },
+  dlDoneText: { color: C.accent },
   free: { color: "#666", textAlign: "center", marginTop: 26, fontSize: 12 },
   backBtn: { marginTop: 16, backgroundColor: "#BC8CF2", paddingHorizontal: 24, paddingVertical: 10, borderRadius: 20 },
 });
