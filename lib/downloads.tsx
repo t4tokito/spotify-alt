@@ -75,6 +75,7 @@ export function DownloadsProvider({ children }: { children: React.ReactNode }) {
         tasks.current.set(song.id, task as unknown as { cancel: () => void });
         setProgress((p) => ({ ...p, [song.id]: 0 }));
         const file = await task.downloadAsync();
+        if (!file) throw new Error("download failed");
         const size = sizes.current.get(song.id) ?? 0;
         setDownloaded((m) => ({ ...m, [song.id]: { song, uri: file.uri, size } }));
       } catch {}
