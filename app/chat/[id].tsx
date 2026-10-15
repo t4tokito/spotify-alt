@@ -113,14 +113,19 @@ export default function ChatThread() {
         <Pressable onPress={() => router.back()} hitSlop={12} style={s.back}>
           <Ionicons name="arrow-back" size={24} color={C.text} />
         </Pressable>
-        {photo ? (
-          <Image source={photo} style={s.avatarImg} />
-        ) : (
-          <View style={s.avatar}>
-            <Text style={s.avatarText}>{(peer?.username?.[0] ?? "?").toUpperCase()}</Text>
-          </View>
-        )}
-        <Text style={s.name}>{peer?.username ?? "Chat"}</Text>
+        <Pressable
+          onPress={() => peer?.username && router.push(`/user/${encodeURIComponent(peer.username)}` as any)}
+          style={s.peer}
+        >
+          {photo ? (
+            <Image source={photo} style={s.avatarImg} />
+          ) : (
+            <View style={s.avatar}>
+              <Text style={s.avatarText}>{(peer?.username?.[0] ?? "?").toUpperCase()}</Text>
+            </View>
+          )}
+          <Text style={s.name}>{peer?.username ?? "Chat"}</Text>
+        </Pressable>
       </View>
 
       <FlatList
@@ -209,6 +214,7 @@ const s = StyleSheet.create({
   root: { flex: 1, backgroundColor: C.bg },
   head: { flexDirection: "row", alignItems: "center", paddingHorizontal: 8, paddingBottom: 8, gap: 8 },
   back: { padding: 8 },
+  peer: { flex: 1, flexDirection: "row", alignItems: "center", gap: 8 },
   avatar: {
     width: 40, height: 40, borderRadius: 20,
     backgroundColor: C.surface2, alignItems: "center", justifyContent: "center",
